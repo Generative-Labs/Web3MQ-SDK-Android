@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Web3mq</string>
+    <string name="title_activity_home_page">HomePageActivity</string>
+    <string name="title_chats">Chats</string>
+    <string name="title_contacts">Contacts</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_profile">Profile</string>
+</resources>
