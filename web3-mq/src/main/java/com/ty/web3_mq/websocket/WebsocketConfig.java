@@ -3,6 +3,7 @@ package com.ty.web3_mq.websocket;
 public class WebsocketConfig {
     public static final String WS_PROTOCOL = "wss";
     public static final String WS_HOST_URL = "dev-ap-jp-1.web3mq.com";
+//    public static final String WS_HOST_URL = "testnet-ap-jp-1.web3mq.com";
     public static final String WS_URL = WebsocketConfig.WS_PROTOCOL+"://"+ WebsocketConfig.WS_HOST_URL+"/messages";
     // connect to node
     public static final byte PbTypeConnectReqCommand = 0b00000010;
@@ -15,7 +16,7 @@ public class WebsocketConfig {
     // notification
     public static final byte PbTypeNotificationListResp = 0b00010100;
 
-    public static final int categoryTypeConnectReqCommand = 10;
+    public static final int category = 10;
 
 
 }

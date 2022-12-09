@@ -1,5 +1,7 @@
 package com.ty.web3_mq.utils;
 
+import android.content.Context;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -18,5 +20,10 @@ public class CommonUtils {
         new_data[1] = pbType;
         System.arraycopy(data, 0, new_data, 2, length);
         return new_data;
+    }
+
+    public static int dp2px(Context ctx, float dp) {
+        float scale = ctx.getResources().getDisplayMetrics().density;
+        return (int) (dp * scale + 0.5f);
     }
 }

@@ -169,7 +169,7 @@ public class Web3MQContacts {
             request.timestamp = System.currentTimeMillis();
             request.action = action;
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.action+request.target_userid+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.HANDLE_FRIEND_REQUEST, request, BaseResponse.class, new HttpManager.Callback<BaseResponse>() {
+            HttpManager.getInstance().post(ApiConfig.HANDLE_FRIEND_REQUEST, request, BaseResponse.class, new HttpManager.Callback<BaseResponse>() {
                 @Override
                 public void onResponse(BaseResponse response) {
                     if(response.getCode()==0){

@@ -5,8 +5,8 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class NewFriendViewHolder extends RecyclerView.ViewHolder{
-    public NewFriendViewHolder(@NonNull View itemView) {
+public class ContactNewFriendViewHolder extends RecyclerView.ViewHolder{
+    public ContactNewFriendViewHolder(@NonNull View itemView) {
         super(itemView);
     }
 }

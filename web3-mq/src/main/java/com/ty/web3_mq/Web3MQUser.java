@@ -3,8 +3,21 @@ import android.util.Log;
 
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
+import com.ty.web3_mq.http.request.GetMyProfileRequest;
+import com.ty.web3_mq.http.request.GetSentFriendRequestListRequest;
+import com.ty.web3_mq.http.request.GetUserInfoRequest;
+import com.ty.web3_mq.http.request.PostMyProfileRequest;
+import com.ty.web3_mq.http.request.SearchUsersRequest;
 import com.ty.web3_mq.http.request.UserLoginRequest;
+import com.ty.web3_mq.http.response.ContactsResponse;
 import com.ty.web3_mq.http.response.LoginResponse;
+import com.ty.web3_mq.http.response.ProfileResponse;
+import com.ty.web3_mq.http.response.SearchUsersResponse;
+import com.ty.web3_mq.http.response.UserInfoResponse;
+import com.ty.web3_mq.interfaces.GetMyProfileCallback;
+import com.ty.web3_mq.interfaces.GetUserinfoCallback;
+import com.ty.web3_mq.interfaces.PostMyProfileCallback;
+import com.ty.web3_mq.interfaces.SearchUsersCallback;
 import com.ty.web3_mq.interfaces.SignupCallback;
 import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3_mq.utils.Constant;
@@ -109,10 +122,127 @@ public class Web3MQUser {
         });
     }
 
-    public boolean existLocalAccount(){
+    public boolean isLocalAccountExist(){
         String prv_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
         String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
         return prv_seed!=null && pub_key!=null;
+    }
+
+    public void getMyProfile(GetMyProfileCallback callback){
+        try {
+            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
+            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            GetMyProfileRequest request = new GetMyProfileRequest();
+            request.userid = "user:"+pub_key;
+            request.timestamp = System.currentTimeMillis();
+            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            HttpManager.getInstance().get(ApiConfig.GET_MY_PROFILE, request, ProfileResponse.class, new HttpManager.Callback<ProfileResponse>() {
+                @Override
+                public void onResponse(ProfileResponse response) {
+                    if(response.getCode()==0){
+                        callback.onSuccess(response.getData());
+                    }else{
+                        callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    callback.onFail("error: "+error);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            callback.onFail("ed25519 sign error");
+        }
+    }
+
+    public void PostMyProfile(String nickname, String avatar_url, PostMyProfileCallback callback){
+        try {
+            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
+            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            PostMyProfileRequest request = new PostMyProfileRequest();
+            request.userid = "user:"+pub_key;
+            request.timestamp = System.currentTimeMillis();
+            request.nickname = nickname;
+            request.avatar_url = avatar_url;
+            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            HttpManager.getInstance().post(ApiConfig.POST_MY_PROFILE, request, ProfileResponse.class, new HttpManager.Callback<ProfileResponse>() {
+                @Override
+                public void onResponse(ProfileResponse response) {
+                    if(response.getCode()==0){
+                        callback.onSuccess(response.getData());
+                    }else{
+                        callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    callback.onFail("error: "+error);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            callback.onFail("ed25519 sign error");
+        }
+    }
+
+    public void GetUserInfo(String did_type, String did_value, GetUserinfoCallback callback){
+        try {
+            GetUserInfoRequest request = new GetUserInfoRequest();
+            request.timestamp = System.currentTimeMillis();
+            request.did_type = did_type;
+            request.did_value = did_value;
+            HttpManager.getInstance().post(ApiConfig.GET_USER_INFO, request, UserInfoResponse.class, new HttpManager.Callback<UserInfoResponse>() {
+                @Override
+                public void onResponse(UserInfoResponse response) {
+                    if(response.getCode()==0){
+                        callback.onSuccess(response.getData());
+                    }else{
+                        callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    callback.onFail("error: "+error);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            callback.onFail("ed25519 sign error");
+        }
+    }
+
+    public void SearchUsers(String keyword, SearchUsersCallback callback){
+        try {
+            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
+            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            SearchUsersRequest request = new SearchUsersRequest();
+            request.userid = "user:"+pub_key;
+            request.timestamp = System.currentTimeMillis();
+            request.keyword = keyword;
+            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.keyword+request.timestamp).getBytes());
+            HttpManager.getInstance().get(ApiConfig.SEARCH_USERS, request, SearchUsersResponse.class, new HttpManager.Callback<SearchUsersResponse>() {
+                @Override
+                public void onResponse(SearchUsersResponse response) {
+                    if(response.getCode()==0){
+                        callback.onSuccess(response.getData());
+                    }else{
+                        callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    callback.onFail("error: "+error);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            callback.onFail("ed25519 sign error");
+        }
     }
 
 }

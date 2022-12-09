@@ -13,9 +13,11 @@ import com.ty.web3_mq.websocket.MessageManager;
 import com.ty.web3_mq.websocket.Web3MQSocketClient;
 import com.ty.web3_mq.websocket.WebsocketConfig;
 
+import org.java_websocket.WebSocket;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
+import org.java_websocket.enums.ReadyState;
 
 /**
  */
@@ -28,6 +30,7 @@ public class Web3MQClient {
     private String userid;
     private String node_id;
     private ConnectCallback connectCallback;
+
     private Web3MQClient() {
     }
 
@@ -95,14 +98,17 @@ public class Web3MQClient {
 
     private void connectWebSocket() {
         if(node_id!=null && userid!=null && prv_key_seed !=null){
-            if(socketClient !=null){
-                try {
-                    socketClient.connectBlocking();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    if(connectCallback!=null){
-                        connectCallback.onFail("connect websocket error");
+            if (socketClient == null) {
+                return;
+            }
+            if (!socketClient.isOpen()) {
+                if (socketClient.getReadyState().equals(ReadyState.NOT_YET_CONNECTED)) {
+                    try {
+                        socketClient.connect();
+                    } catch (IllegalStateException e) {
                     }
+                } else if (socketClient.getReadyState().equals(ReadyState.CLOSING) || socketClient.getReadyState().equals(ReadyState.CLOSED)) {
+                    socketClient.reconnect();
                 }
             }
         }else{
@@ -111,6 +117,14 @@ public class Web3MQClient {
             }
             Log.e(TAG,"node id is null or init error");
         }
+    }
+
+    public String getNodeId(){
+        return this.node_id;
+    }
+
+    protected Web3MQSocketClient getSocketClient(){
+        return this.socketClient;
     }
 
     public void close(){

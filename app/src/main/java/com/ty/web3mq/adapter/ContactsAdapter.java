@@ -27,8 +27,8 @@ public class ContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if(viewType == VIEW_TYPE_NEW_FRIEND){
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_new_friend,parent,false);
-            NewFriendViewHolder viewHolder = new NewFriendViewHolder(v);
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_contact_new_friend,parent,false);
+            ContactNewFriendViewHolder viewHolder = new ContactNewFriendViewHolder(v);
             return viewHolder;
         }else if(viewType == VIEW_TYPE_CONTRACT){
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_contact,parent,false);
@@ -40,7 +40,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if(holder instanceof NewFriendViewHolder){
+        if(holder instanceof ContactNewFriendViewHolder){
             bindNewFriendItem(holder);
         }else if(holder instanceof ContactViewHolder){
             bindContactItem(holder, position);

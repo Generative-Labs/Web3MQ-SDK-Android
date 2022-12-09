@@ -1,4 +1,4 @@
-package com.ty.web3_mq.http.utils;
+package com.ty.web3_mq.utils;
 
 import android.os.Build;
 import android.text.TextUtils;

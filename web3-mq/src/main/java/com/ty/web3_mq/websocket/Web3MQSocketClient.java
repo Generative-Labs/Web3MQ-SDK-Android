@@ -49,7 +49,7 @@ public class Web3MQSocketClient extends WebSocketClient {
             e.printStackTrace();
             Log.e(TAG,"ed25519 Sign Error");
         }
-        byte[] connectBytes = CommonUtils.appendPrefix(WebsocketConfig.categoryTypeConnectReqCommand, WebsocketConfig.PbTypeConnectReqCommand, builder.build().toByteArray());
+        byte[] connectBytes = CommonUtils.appendPrefix(WebsocketConfig.category, WebsocketConfig.PbTypeConnectReqCommand, builder.build().toByteArray());
         this.send(connectBytes);
     }
 

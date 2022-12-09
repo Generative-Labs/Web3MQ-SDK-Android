@@ -1,7 +1,6 @@
 package com.ty.web3_mq.http;
 
 import android.content.Context;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.androidnetworking.AndroidNetworking;
@@ -16,23 +15,12 @@ import com.google.gson.reflect.TypeToken;
 import com.ty.web3_mq.http.interceptor.HeadersInterceptor;
 import com.ty.web3_mq.http.interceptor.TokenInterceptor;
 import com.ty.web3_mq.http.request.BaseRequest;
-import com.ty.web3_mq.http.utils.SignUtils;
+import com.ty.web3_mq.utils.SignUtils;
 
 import java.io.File;
-import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
 import java.util.List;
 import java.util.Map;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
 

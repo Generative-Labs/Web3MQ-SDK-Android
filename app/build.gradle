@@ -5,19 +5,12 @@ plugins {
 android {
     compileSdk 32
 
-//    packagingOptions {
-//        exclude 'META-INF/INDEX.LIST'
-//        exclude 'META-INF/DEPENDENCIES'
-//        exclude 'META-INF/LICENSE.md'
-//        exclude 'META-INF/NOTICE.md'
-//    }
-
     defaultConfig {
         applicationId "com.ty.web3mq"
         minSdk 23
         targetSdk 32
         versionCode 1
-        versionName "1.0"
+        versionName "0.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,7 +28,19 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+//    android.applicationVariants.all {
+//        variant ->
+//            variant.outputs.all {
+//                //在这里修改apk文件名
+//                outputFileName = "Web3MQ_v${variant.versionName}_${variant.buildType.name}_${releaseTime()}.apk"
+//            }
+//    }
 }
+
+//def releaseTime() {
+//    return new Date().format("yyyyMMddHHmm", TimeZone.getTimeZone("GMT+08:00"))
+//}
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.1'
@@ -43,8 +48,4 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     implementation project(path: ':web3-mq')
-//    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.1'
-//    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
-//    implementation 'androidx.navigation:navigation-fragment:2.5.3'
-//    implementation 'androidx.navigation:navigation-ui:2.5.3'
 }
