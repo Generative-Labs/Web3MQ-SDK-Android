@@ -58,7 +58,7 @@ public class LoginFragment extends BaseFragment {
     }
 
     private void setListener() {
-        Web3MQClient.getInstance().setConnectCallback(new ConnectCallback() {
+        ConnectCallback callback = new ConnectCallback() {
             @Override
             public void onSuccess() {
                 // connect success
@@ -72,12 +72,12 @@ public class LoginFragment extends BaseFragment {
                 hideLoadingDialog();
                 Toast.makeText(getActivity(),"connect fail", Toast.LENGTH_SHORT).show();
             }
-        });
+        };
 
         signupCallback = new SignupCallback() {
             @Override
             public void onSuccess() {
-                Web3MQClient.getInstance().startConnect();
+                Web3MQClient.getInstance().startConnect(callback);
             }
 
             @Override
@@ -91,7 +91,7 @@ public class LoginFragment extends BaseFragment {
             @Override
             public void onClick(View v) {
                 showLoadingDialog();
-                Web3MQClient.getInstance().startConnect();
+                Web3MQClient.getInstance().startConnect(callback);
             }
         });
         btn_sign.setOnClickListener(new View.OnClickListener() {

@@ -29,8 +29,6 @@ public class Web3MQClient {
     private String prv_key_seed;
     private String userid;
     private String node_id;
-    private ConnectCallback connectCallback;
-
     private Web3MQClient() {
     }
 
@@ -61,7 +59,8 @@ public class Web3MQClient {
         }
     }
 
-    public void startConnect(){
+    public void startConnect(ConnectCallback connectCallback){
+        MessageManager.getInstance().setConnectCallback(connectCallback);
         this.prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
         String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
         Log.i(TAG,"get prv seed:"+prv_key_seed);
@@ -79,7 +78,7 @@ public class Web3MQClient {
                 node_id = response.getData().NodeID;
                 Log.i("getNodeId","NodeID:"+node_id);
                 socketClient.initConnectionParam(node_id,userid,prv_key_seed);
-                connectWebSocket();
+                connectWebSocket(connectCallback);
             }
 
             @Override
@@ -91,12 +90,7 @@ public class Web3MQClient {
         });
     }
 
-    public void setConnectCallback(ConnectCallback connectCallback){
-        this.connectCallback = connectCallback;
-        MessageManager.getInstance().setConnectCallback(connectCallback);
-    }
-
-    private void connectWebSocket() {
+    private void connectWebSocket(ConnectCallback connectCallback) {
         if(node_id!=null && userid!=null && prv_key_seed !=null){
             if (socketClient == null) {
                 return;
