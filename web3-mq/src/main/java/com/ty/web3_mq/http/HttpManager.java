@@ -57,6 +57,10 @@ public class HttpManager {
         AndroidNetworking.initialize(context, okHttpClient);
     }
 
+    public void close(){
+        AndroidNetworking.shutDown();
+    }
+
     public void post(final String url, final BaseRequest request, final Class clazz,
                      final Callback callback) {
         ANRequest.PostRequestBuilder builder = AndroidNetworking.post(url)

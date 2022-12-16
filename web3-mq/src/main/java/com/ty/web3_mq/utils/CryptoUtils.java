@@ -33,30 +33,23 @@ public class CryptoUtils {
     }
 
     public static String SHA3_ENCODE(String input){
-//        try {
-            Log.i("CryptoUtils","SHA3 String:"+input);
-//            Security.addProvider(new BouncyCastleProvider());
+        Log.i("CryptoUtils","SHA3 String:"+input);
+        MessageDigest md = new SHA3.Digest224();
+        // digest() method is called
+        // to calculate message digest of the input string
+        // returned as array of byte
+        byte[] messageDigest = md.digest(input.getBytes());
 
-            MessageDigest md = new SHA3.Digest224();
-            // digest() method is called
-            // to calculate message digest of the input string
-            // returned as array of byte
-            byte[] messageDigest = md.digest(input.getBytes());
+        // Convert byte array into signum representation
+        BigInteger no = new BigInteger(1, messageDigest);
 
-            // Convert byte array into signum representation
-            BigInteger no = new BigInteger(1, messageDigest);
+        // Convert message digest into hex value
+        String hashtext = no.toString(16);
 
-            // Convert message digest into hex value
-            String hashtext = no.toString(16);
-
-            // Add preceding 0s to make it 32 bit
-            while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
-            }
-            return hashtext;
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        }
-//        return null;
+        // Add preceding 0s to make it 32 bit
+        while (hashtext.length() < 32) {
+            hashtext = "0" + hashtext;
+        }
+        return hashtext;
     }
 }

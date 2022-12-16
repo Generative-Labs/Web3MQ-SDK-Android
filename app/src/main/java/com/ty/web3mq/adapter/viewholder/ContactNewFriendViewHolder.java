@@ -1,4 +1,4 @@
-package com.ty.web3mq.adapter;
+package com.ty.web3mq.adapter.viewholder;
 
 import android.view.View;
 

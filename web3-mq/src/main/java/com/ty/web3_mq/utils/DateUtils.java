@@ -15,7 +15,7 @@ public class DateUtils {
     }
 
     public static String getTimeString(long timestamp){
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         return sdf.format(new Date(timestamp));
     }
 }

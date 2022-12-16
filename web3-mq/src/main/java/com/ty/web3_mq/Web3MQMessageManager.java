@@ -11,10 +11,12 @@ import com.ty.web3_mq.http.response.BaseResponse;
 import com.ty.web3_mq.http.response.GetMessageHistoryResponse;
 import com.ty.web3_mq.interfaces.ChangeMessageStatusRequestCallback;
 import com.ty.web3_mq.interfaces.GetMessageHistoryCallback;
+import com.ty.web3_mq.interfaces.MessageCallback;
 import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3_mq.utils.Constant;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
+import com.ty.web3_mq.websocket.MessageManager;
 import com.ty.web3_mq.websocket.WebsocketConfig;
 
 import org.bouncycastle.jcajce.provider.digest.SHA3;
@@ -24,17 +26,17 @@ import java.security.MessageDigest;
 
 import web3mq.Message;
 
-public class Web3MQMessage {
+public class Web3MQMessageManager {
     private static final String TAG = "Web3MQNotification";
-    private volatile static Web3MQMessage message;
-    private Web3MQMessage() {
+    private volatile static Web3MQMessageManager message;
+    private Web3MQMessageManager() {
     }
 
-    public static Web3MQMessage getInstance() {
+    public static Web3MQMessageManager getInstance() {
         if (null == message) {
-            synchronized (Web3MQMessage.class) {
+            synchronized (Web3MQMessageManager.class) {
                 if (null == message) {
-                    message = new Web3MQMessage();
+                    message = new Web3MQMessageManager();
                 }
             }
         }
@@ -84,7 +86,7 @@ public class Web3MQMessage {
             request.size = size;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.topic+request.timestamp).getBytes());
-            HttpManager.getInstance().post(ApiConfig.GET_MESSAGE_HISTORY, request, GetMessageHistoryResponse.class, new HttpManager.Callback<GetMessageHistoryResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_MESSAGE_HISTORY, request, GetMessageHistoryResponse.class, new HttpManager.Callback<GetMessageHistoryResponse>() {
                 @Override
                 public void onResponse(GetMessageHistoryResponse response) {
                     if(response.getCode()==0){
@@ -110,6 +112,7 @@ public class Web3MQMessage {
             Log.e(TAG,"websocket not connect");
             return;
         }
+        Log.i(TAG,"-----sendMessage-----");
         try {
             String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
             String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
@@ -119,19 +122,26 @@ public class Web3MQMessage {
             String msg_id = GenerateMessageID(user_id, topic_id, timestamp, msg.getBytes());
             String signContent = msg_id + user_id + topic_id + node_id + timestamp;
             String sign = Ed25519.ed25519Sign(prv_key_seed,signContent.getBytes());
-            Message.Web3MQRequestMessage.Builder builder= Message.Web3MQRequestMessage.newBuilder();
+            Message.Web3MQMessage.Builder builder= Message.Web3MQMessage.newBuilder();
             builder.setNodeId(node_id);
-            builder.setTimestamp(System.currentTimeMillis());
+            Log.i(TAG,"node_id:"+node_id);
             builder.setCipherSuite("NONE");
             builder.setPayloadType("text/plain; charset=utf-8");
             builder.setFromSign(sign);
+            Log.i(TAG,"sign:"+sign);
             builder.setTimestamp(timestamp);
+            Log.i(TAG,"timestamp:"+timestamp);
             builder.setMessageId(msg_id);
+            Log.i(TAG,"msg_id:"+msg_id);
             builder.setVersion(1);
             builder.setComeFrom(user_id);
+            Log.i(TAG,"comfrom:"+user_id);
             builder.setContentTopic(topic_id);
+            Log.i(TAG,"topic_id:"+topic_id);
             builder.setNeedStore(needStore);
+            Log.i(TAG,"needStore:"+needStore);
             builder.setPayload(ByteString.copyFrom(msg.getBytes()));
+            Log.i(TAG,"payload:"+msg);
             byte[] sendMessageBytes = CommonUtils.appendPrefix(WebsocketConfig.category, WebsocketConfig.PbTypeMessage, builder.build().toByteArray());
             Web3MQClient.getInstance().getSocketClient().send(sendMessageBytes);
         } catch (Exception e) {
@@ -148,5 +158,13 @@ public class Web3MQMessage {
         byte[] messageDigest = md.digest();
         BigInteger no = new BigInteger(1, messageDigest);
         return no.toString(16);
+    }
+
+    public void addChatMessageCallback(String from, MessageCallback callback){
+        MessageManager.getInstance().addDMMessageCallback(from,callback);
+    }
+
+    public void removeChatMessageCallback(String from){
+        MessageManager.getInstance().removeDMMessageCallback(from);
     }
 }

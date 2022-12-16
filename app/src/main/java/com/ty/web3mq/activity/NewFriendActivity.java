@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.ty.web3_mq.http.HttpManager;
 import com.ty.web3mq.R;
 import com.ty.web3mq.fragment.NewFriendFragment;
 
@@ -20,4 +21,5 @@ public class NewFriendActivity extends AppCompatActivity {
                 .beginTransaction();
         transaction.add(R.id.fl_content,newFriendFragment).commitAllowingStateLoss();
     }
+
 }

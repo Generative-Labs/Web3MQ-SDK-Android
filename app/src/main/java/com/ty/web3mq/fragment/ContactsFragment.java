@@ -1,25 +1,18 @@
 package com.ty.web3mq.fragment;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ty.web3_mq.Web3MQContacts;
 import com.ty.web3_mq.http.beans.ContactBean;
 import com.ty.web3_mq.http.beans.ContactsBean;
-import com.ty.web3_mq.interfaces.FriendRequestCallback;
 import com.ty.web3_mq.interfaces.GetContactsCallback;
-import com.ty.web3_mq.interfaces.SearchContactsCallback;
 import com.ty.web3mq.R;
 import com.ty.web3mq.activity.NewFriendActivity;
 import com.ty.web3mq.adapter.ContactsAdapter;
@@ -41,7 +34,7 @@ public class ContactsFragment extends BaseFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContent(R.layout.fragment_contacts);
+        setContent(R.layout.fragment_contacts,true);
     }
 
     @Override
@@ -57,13 +50,14 @@ public class ContactsFragment extends BaseFragment {
             public void onSuccess(ContactsBean contactsBean) {
                 ArrayList<ContactBean> contacts = contactsBean.result;
                 updateContactsView(contacts);
-
                 Log.i(TAG,"total: "+contactsBean.total);
+                stopRefresh();
             }
 
             @Override
             public void onFail(String error) {
                 Log.e(TAG,"onFail:"+error);
+                stopRefresh();
             }
         });
     }
@@ -90,5 +84,11 @@ public class ContactsFragment extends BaseFragment {
         recycler_view = rootView.findViewById(R.id.recycler_view_contacts);
         recycler_view.setLayoutManager(new LinearLayoutManager(getActivity(),LinearLayoutManager.VERTICAL,false));
         updateContactsView(null);
+        setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestData();
+            }
+        });
     }
 }

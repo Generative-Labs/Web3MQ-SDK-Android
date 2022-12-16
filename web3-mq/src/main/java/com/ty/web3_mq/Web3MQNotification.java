@@ -9,7 +9,7 @@ import com.ty.web3_mq.http.request.GetNotificationHistoryRequest;
 import com.ty.web3_mq.http.response.CommonResponse;
 import com.ty.web3_mq.http.response.GetNotificationHistoryResponse;
 import com.ty.web3_mq.interfaces.GetNotificationHistoryCallback;
-import com.ty.web3_mq.interfaces.OnNotificationMessageEvent;
+import com.ty.web3_mq.interfaces.NotificationMessageCallback;
 import com.ty.web3_mq.utils.Constant;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
@@ -36,8 +36,12 @@ public class Web3MQNotification {
         return notification;
     }
 
-    public void setOnNotificationMessageEvent(OnNotificationMessageEvent onNotificationMessageEvent){
-        MessageManager.getInstance().setOnNotificationMessageEvent(onNotificationMessageEvent);
+    public void setOnNotificationMessageEvent(NotificationMessageCallback notificationMessageCallback){
+        MessageManager.getInstance().setOnNotificationMessageEvent(notificationMessageCallback);
+    }
+
+    public void removeNotificationMessageEvent(){
+        MessageManager.getInstance().removeNotificationMessageEvent();
     }
 
     public void changeStatus(String userid, String[] message_ids, String status){

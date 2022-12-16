@@ -7,6 +7,7 @@ import com.ty.web3_mq.http.request.GetMyCreateTopicListRequest;
 import com.ty.web3_mq.http.request.GetNotificationHistoryRequest;
 import com.ty.web3_mq.http.request.PublishTopicMessageRequest;
 import com.ty.web3_mq.http.response.CommonResponse;
+import com.ty.web3_mq.http.response.CreateTopicResponse;
 import com.ty.web3_mq.http.response.GetNotificationHistoryResponse;
 import com.ty.web3_mq.http.response.TopicListResponse;
 import com.ty.web3_mq.interfaces.CreateTopicCallback;
@@ -44,11 +45,11 @@ public class Web3MQTopic {
             request.topic_name = topic_name;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
-            HttpManager.getInstance().post(ApiConfig.CREATE_TOPIC, request, CommonResponse.class, new HttpManager.Callback<CommonResponse>() {
+            HttpManager.getInstance().post(ApiConfig.CREATE_TOPIC, request, CreateTopicResponse.class, new HttpManager.Callback<CreateTopicResponse>() {
                 @Override
-                public void onResponse(CommonResponse response) {
+                public void onResponse(CreateTopicResponse response) {
                     if(response.getCode()==0){
-                        callback.onSuccess();
+                        callback.onSuccess(response.getData());
                     }else{
                         callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
                     }
@@ -75,7 +76,7 @@ public class Web3MQTopic {
             request.size = size;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.GET_MY_SUBSCRIBE_TOPIC_LIST, request, TopicListResponse.class, new HttpManager.Callback<TopicListResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_MY_CREATE_TOPIC_LIST, request, TopicListResponse.class, new HttpManager.Callback<TopicListResponse>() {
                 @Override
                 public void onResponse(TopicListResponse response) {
                     if(response.getCode()==0){
@@ -106,7 +107,7 @@ public class Web3MQTopic {
             request.size = size;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.GET_MY_CREATE_TOPIC_LIST, request, TopicListResponse.class, new HttpManager.Callback<TopicListResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_MY_SUBSCRIBE_TOPIC_LIST, request, TopicListResponse.class, new HttpManager.Callback<TopicListResponse>() {
                 @Override
                 public void onResponse(TopicListResponse response) {
                     if(response.getCode()==0){

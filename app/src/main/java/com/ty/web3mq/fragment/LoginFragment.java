@@ -14,6 +14,8 @@ import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.Web3MQUser;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.SignupCallback;
+import com.ty.web3_mq.utils.Constant;
+import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3mq.R;
 import com.ty.web3mq.activity.HomePageActivity;
 
@@ -22,7 +24,7 @@ public class LoginFragment extends BaseFragment {
     private static LoginFragment instance;
     private static final String TAG = "LoginFragment";
     private Button btn_login,btn_sign;
-    private EditText et_eth_address, et_eth_prv_key;
+    private EditText et_eth_address, et_eth_prv_key, et_userid;
     private Web3MQUser web3MQUser = Web3MQUser.getInstance();
     private SignupCallback signupCallback;
     private static final String ETH_ADDRESS = "0x1E6c3eed532d4a3937FBE178909739E60A327e19";
@@ -37,7 +39,7 @@ public class LoginFragment extends BaseFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContent(R.layout.fragment_login);
+        setContent(R.layout.fragment_login,false);
     }
 
     @Override
@@ -52,8 +54,13 @@ public class LoginFragment extends BaseFragment {
         btn_sign = rootView.findViewById(R.id.btn_sign);
         et_eth_address = rootView.findViewById(R.id.et_eth_address);
         et_eth_prv_key = rootView.findViewById(R.id.et_eth_prv_key);
+        et_userid = rootView.findViewById(R.id.et_userid);
         et_eth_address.setText(ETH_ADDRESS);
         et_eth_prv_key.setText(ETH_PRV_KEY);
+        String userid = Web3MQUser.getInstance().getMyUserId();
+        if(userid!=null){
+            et_userid.setText(userid);
+        }
         btn_login.setEnabled(web3MQUser.isLocalAccountExist());
     }
 

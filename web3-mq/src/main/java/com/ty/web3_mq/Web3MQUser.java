@@ -4,12 +4,10 @@ import android.util.Log;
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
 import com.ty.web3_mq.http.request.GetMyProfileRequest;
-import com.ty.web3_mq.http.request.GetSentFriendRequestListRequest;
 import com.ty.web3_mq.http.request.GetUserInfoRequest;
 import com.ty.web3_mq.http.request.PostMyProfileRequest;
 import com.ty.web3_mq.http.request.SearchUsersRequest;
 import com.ty.web3_mq.http.request.UserLoginRequest;
-import com.ty.web3_mq.http.response.ContactsResponse;
 import com.ty.web3_mq.http.response.LoginResponse;
 import com.ty.web3_mq.http.response.ProfileResponse;
 import com.ty.web3_mq.http.response.SearchUsersResponse;
@@ -157,7 +155,7 @@ public class Web3MQUser {
         }
     }
 
-    public void PostMyProfile(String nickname, String avatar_url, PostMyProfileCallback callback){
+    public void postMyProfile(String nickname, String avatar_url, PostMyProfileCallback callback){
         try {
             String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
             String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
@@ -186,6 +184,14 @@ public class Web3MQUser {
             e.printStackTrace();
             callback.onFail("ed25519 sign error");
         }
+    }
+
+    public String getMyUserId(){
+        String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
+        if(pub_key!=null){
+            return "user:"+pub_key;
+        }
+        return null;
     }
 
     public void GetUserInfo(String did_type, String did_value, GetUserinfoCallback callback){

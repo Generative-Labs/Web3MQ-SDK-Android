@@ -8,11 +8,10 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.ty.web3_mq.http.beans.ContactBean;
 import com.ty.web3_mq.http.beans.NotificationBean;
-import com.ty.web3_mq.http.beans.NotificationsBean;
 import com.ty.web3_mq.utils.DateUtils;
 import com.ty.web3mq.R;
+import com.ty.web3mq.adapter.viewholder.NotificationHistoryViewHolder;
 
 import java.util.ArrayList;
 

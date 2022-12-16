@@ -122,7 +122,7 @@ public class Web3MQClient {
     }
 
     public void close(){
-        if(socketClient !=null && socketClient.isOpen()){
+        if(socketClient!=null){
             try {
                 socketClient.closeBlocking();
             } catch (InterruptedException e) {

@@ -1,8 +1,8 @@
 package com.ty.web3_mq.interfaces;
 
-import com.ty.web3_mq.http.beans.ContactsBean;
+import com.ty.web3_mq.http.beans.GroupMembersBean;
 
 public interface GetGroupMembersCallback {
-    void onSuccess(ContactsBean contactsBean);
+    void onSuccess(GroupMembersBean groupMembersBean);
     void onFail(String error);
 }

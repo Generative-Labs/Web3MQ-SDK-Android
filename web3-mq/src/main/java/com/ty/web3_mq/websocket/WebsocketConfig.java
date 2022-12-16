@@ -5,6 +5,9 @@ public class WebsocketConfig {
     public static final String WS_HOST_URL = "dev-ap-jp-1.web3mq.com";
 //    public static final String WS_HOST_URL = "testnet-ap-jp-1.web3mq.com";
     public static final String WS_URL = WebsocketConfig.WS_PROTOCOL+"://"+ WebsocketConfig.WS_HOST_URL+"/messages";
+    // ping
+    public static final byte PbTypePingCommand = (byte) 0b10000000;
+    public static final byte PbTypePongCommand = (byte) 0b10000001;
     // connect to node
     public static final byte PbTypeConnectReqCommand = 0b00000010;
     public static final byte PbTypeConnectRespCommand = 0b00000011;

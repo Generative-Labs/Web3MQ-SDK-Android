@@ -29,18 +29,18 @@ android {
         viewBinding true
     }
 
-//    android.applicationVariants.all {
-//        variant ->
-//            variant.outputs.all {
-//                //在这里修改apk文件名
-//                outputFileName = "Web3MQ_v${variant.versionName}_${variant.buildType.name}_${releaseTime()}.apk"
-//            }
-//    }
+    android.applicationVariants.all {
+        variant ->
+            variant.outputs.all {
+                //在这里修改apk文件名
+                outputFileName = "Web3MQ_v${variant.versionName}_${variant.buildType.name}_${releaseTime()}.apk"
+            }
+    }
 }
 
-//def releaseTime() {
-//    return new Date().format("yyyyMMddHHmm", TimeZone.getTimeZone("GMT+08:00"))
-//}
+def releaseTime() {
+    return new Date().format("yyyyMMddHHmm", TimeZone.getTimeZone("GMT+08:00"))
+}
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.1'
@@ -48,4 +48,5 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     implementation project(path: ':web3-mq')
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
 }

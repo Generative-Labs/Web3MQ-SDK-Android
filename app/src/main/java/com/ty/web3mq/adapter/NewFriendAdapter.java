@@ -8,18 +8,19 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.ty.web3_mq.http.beans.ContactBean;
+import com.ty.web3_mq.http.beans.FriendRequestBean;
 import com.ty.web3mq.R;
+import com.ty.web3mq.adapter.viewholder.NewFriendItemViewHolder;
 
 import java.util.ArrayList;
 
 public class NewFriendAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
     private Context context;
-    private ArrayList<ContactBean> contactList;
+    private ArrayList<FriendRequestBean> friendRequestList;
     private OnActionClickListener onActionClickListener;
-    public NewFriendAdapter(Context context, ArrayList<ContactBean> contactList){
+    public NewFriendAdapter(Context context, ArrayList<FriendRequestBean> contactList){
         this.context = context;
-        this.contactList = contactList;
+        this.friendRequestList = contactList;
     }
     @NonNull
     @Override
@@ -36,9 +37,10 @@ public class NewFriendAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
 
     private void bindContactItem(RecyclerView.ViewHolder holder, int position){
-        ContactBean contact = contactList.get(position);
+        FriendRequestBean friendRequest = friendRequestList.get(position);
         NewFriendItemViewHolder viewHolder = (NewFriendItemViewHolder)holder;
-        viewHolder.setTv_userid(contact.userid);
+        viewHolder.setTv_userid(friendRequest.userid);
+        ((NewFriendItemViewHolder) holder).tv_action.setVisibility(friendRequest.status==FriendRequestBean.STATUS_NOT_AGREED?View.VISIBLE:View.INVISIBLE);
         ((NewFriendItemViewHolder) holder).tv_action.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -59,6 +61,6 @@ public class NewFriendAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public int getItemCount() {
-        return contactList.size();
+        return friendRequestList.size();
     }
 }

@@ -1,4 +1,4 @@
-package com.ty.web3mq.adapter;
+package com.ty.web3mq.adapter.viewholder;
 
 import android.view.View;
 import android.widget.TextView;
@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ty.web3mq.R;
 
 public class NotificationHistoryViewHolder extends RecyclerView.ViewHolder{
-    TextView tv_notification_title,tv_notification_content,tv_notification_time;
+    public TextView tv_notification_title,tv_notification_content,tv_notification_time;
     public NotificationHistoryViewHolder(@NonNull View itemView) {
         super(itemView);
         tv_notification_title = itemView.findViewById(R.id.tv_notification_title);

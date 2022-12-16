@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.ty.web3_mq.http.beans.ContactBean;
 import com.ty.web3mq.R;
+import com.ty.web3mq.adapter.viewholder.ContactNewFriendViewHolder;
+import com.ty.web3mq.adapter.viewholder.ContactViewHolder;
 
 import java.util.ArrayList;
 

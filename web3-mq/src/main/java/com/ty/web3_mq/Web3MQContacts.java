@@ -10,6 +10,7 @@ import com.ty.web3_mq.http.request.SearchContactRequest;
 import com.ty.web3_mq.http.request.SendFriendRequest;
 import com.ty.web3_mq.http.response.BaseResponse;
 import com.ty.web3_mq.http.response.ContactsResponse;
+import com.ty.web3_mq.http.response.FriendRequestListResponse;
 import com.ty.web3_mq.interfaces.FriendRequestCallback;
 import com.ty.web3_mq.interfaces.GetContactsCallback;
 import com.ty.web3_mq.interfaces.GetReceiveFriendRequestListCallback;
@@ -138,9 +139,9 @@ public class Web3MQContacts {
             request.userid = "user:"+pub_key;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.GET_SENT_FRIEND_REQUEST_LIST, request, ContactsResponse.class, new HttpManager.Callback<ContactsResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_SENT_FRIEND_REQUEST_LIST, request, FriendRequestListResponse.class, new HttpManager.Callback<FriendRequestListResponse>() {
                 @Override
-                public void onResponse(ContactsResponse response) {
+                public void onResponse(FriendRequestListResponse response) {
                     if(response.getCode()==0){
                         callback.onSuccess(response.getData());
                     }else{
@@ -200,9 +201,9 @@ public class Web3MQContacts {
             request.userid = "user:"+pub_key;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.GET_RECEIVE_FRIEND_REQUEST_LIST, request, ContactsResponse.class, new HttpManager.Callback<ContactsResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_RECEIVE_FRIEND_REQUEST_LIST, request, FriendRequestListResponse.class, new HttpManager.Callback<FriendRequestListResponse>() {
                 @Override
-                public void onResponse(ContactsResponse response) {
+                public void onResponse(FriendRequestListResponse response) {
                     if(response.getCode()==0){
                         callback.onSuccess(response.getData());
                     }else{

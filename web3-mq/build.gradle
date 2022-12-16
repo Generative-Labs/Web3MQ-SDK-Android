@@ -7,7 +7,6 @@ android {
     compileSdk 32
 
     defaultConfig {
-//        multiDexEnabled true
         minSdk 23
         targetSdk 32
 
@@ -22,7 +21,6 @@ android {
         }
     }
     compileOptions {
-//        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
@@ -62,7 +60,6 @@ protobuf {
 
 
 dependencies {
-//    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
     implementation 'com.google.code.gson:gson:2.8.0'
     implementation 'com.amitshekhar.android:android-networking:1.0.2'

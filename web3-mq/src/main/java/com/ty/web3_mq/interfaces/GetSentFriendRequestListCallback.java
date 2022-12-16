@@ -1,8 +1,9 @@
 package com.ty.web3_mq.interfaces;
 
-import com.ty.web3_mq.http.beans.ContactsBean;
+import com.ty.web3_mq.http.beans.FriendRequestsBean;
+
 
 public interface GetSentFriendRequestListCallback {
-    void onSuccess(ContactsBean contactsBean);
+    void onSuccess(FriendRequestsBean requestsBean);
     void onFail(String error);
 }

@@ -13,10 +13,13 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ty.web3_mq.Web3MQContacts;
 import com.ty.web3_mq.http.beans.ContactBean;
 import com.ty.web3_mq.http.beans.ContactsBean;
+import com.ty.web3_mq.http.beans.FriendRequestBean;
+import com.ty.web3_mq.http.beans.FriendRequestsBean;
 import com.ty.web3_mq.interfaces.FriendRequestCallback;
 import com.ty.web3_mq.interfaces.GetReceiveFriendRequestListCallback;
 import com.ty.web3_mq.interfaces.HandleFriendRequestCallback;
@@ -44,7 +47,7 @@ public class NewFriendFragment extends BaseFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContent(R.layout.fragment_new_friend);
+        setContent(R.layout.fragment_new_friend,true);
     }
 
     @Override
@@ -57,17 +60,19 @@ public class NewFriendFragment extends BaseFragment {
     private void requestData() {
         showLoadingDialog();
         Web3MQContacts.getInstance().getReceiveFriendRequestList(1, 20, new GetReceiveFriendRequestListCallback() {
+
             @Override
-            public void onSuccess(ContactsBean contactsBean) {
-                Log.i(TAG,"total:"+contactsBean.total);
-                updateNewFriendView(contactsBean.result);
+            public void onSuccess(FriendRequestsBean friendRequestBeans) {
+                updateNewFriendView(friendRequestBeans.result);
                 hideLoadingDialog();
+                stopRefresh();
             }
 
             @Override
             public void onFail(String error) {
                 Toast.makeText(getActivity(),"get friend request fail. error:"+error,Toast.LENGTH_SHORT).show();
                 hideLoadingDialog();
+                stopRefresh();
             }
         });
 
@@ -85,19 +90,19 @@ public class NewFriendFragment extends BaseFragment {
 //        });
     }
 
-    private void updateNewFriendView(ArrayList<ContactBean> contactBeans){
-        adapter = new NewFriendAdapter(getActivity(),contactBeans);
+    private void updateNewFriendView(ArrayList<FriendRequestBean> friendRequestBeans){
+        adapter = new NewFriendAdapter(getActivity(),friendRequestBeans);
         recycler_view.setAdapter(adapter);
         adapter.setOnActionClickListener(new NewFriendAdapter.OnActionClickListener() {
             @Override
             public void onItemClick(int position) {
-                ContactBean contact = contactBeans.get(position);
+                FriendRequestBean contact = friendRequestBeans.get(position);
                 handleFriendRequest(contact);
             }
         });
     }
 
-    private void handleFriendRequest(ContactBean contact) {
+    private void handleFriendRequest(FriendRequestBean contact) {
         Web3MQContacts.getInstance().handleFriendRequest(contact.userid, "agree", new HandleFriendRequestCallback() {
             @Override
             public void onSuccess() {
@@ -120,6 +125,13 @@ public class NewFriendFragment extends BaseFragment {
             @Override
             public void onClick(View v) {
                 showNewFriendDialog();
+            }
+        });
+
+        setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestData();
             }
         });
     }
@@ -159,11 +171,17 @@ public class NewFriendFragment extends BaseFragment {
             @Override
             public void onSuccess() {
                 Toast.makeText(getActivity(),"send friend request success",Toast.LENGTH_SHORT).show();
+                if(alertDialog!=null){
+                    alertDialog.dismiss();
+                }
             }
 
             @Override
             public void onFail(String error) {
                 Toast.makeText(getActivity(),"send friend request fail error:"+ error,Toast.LENGTH_SHORT).show();
+                if(alertDialog!=null){
+                    alertDialog.dismiss();
+                }
             }
         });
     }

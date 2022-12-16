@@ -2,12 +2,14 @@ package com.ty.web3_mq;
 
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
+import com.ty.web3_mq.http.beans.GroupMembersBean;
 import com.ty.web3_mq.http.request.CreateGroupRequest;
 import com.ty.web3_mq.http.request.GetGroupListRequest;
 import com.ty.web3_mq.http.request.GetGroupMembersRequest;
 import com.ty.web3_mq.http.request.InvitationGroupRequest;
 import com.ty.web3_mq.http.response.ContactsResponse;
 import com.ty.web3_mq.http.response.CreateGroupResponse;
+import com.ty.web3_mq.http.response.GroupMembersResponse;
 import com.ty.web3_mq.http.response.GroupsResponse;
 import com.ty.web3_mq.http.response.InvitationGroupResponse;
 import com.ty.web3_mq.interfaces.CreateGroupCallback;
@@ -138,9 +140,9 @@ public class Web3MQGroup {
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
             request.groupid = groupid;
-            HttpManager.getInstance().get(ApiConfig.GET_GROUP_LIST, request, ContactsResponse.class, new HttpManager.Callback<ContactsResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_GROUP_MEMBERS, request, GroupMembersResponse.class, new HttpManager.Callback<GroupMembersResponse>() {
                 @Override
-                public void onResponse(ContactsResponse response) {
+                public void onResponse(GroupMembersResponse response) {
                     if(response.getCode()==0){
                         callback.onSuccess(response.getData());
                     }else{

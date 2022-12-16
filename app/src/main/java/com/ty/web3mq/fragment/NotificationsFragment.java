@@ -6,18 +6,26 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ty.web3_mq.Web3MQNotification;
+import com.ty.web3_mq.http.beans.NotificationBean;
 import com.ty.web3_mq.http.beans.NotificationsBean;
 import com.ty.web3_mq.interfaces.GetNotificationHistoryCallback;
+import com.ty.web3_mq.interfaces.NotificationMessageCallback;
 import com.ty.web3mq.R;
 import com.ty.web3mq.adapter.NotificationsAdapter;
+
+import java.util.ArrayList;
+
+import web3mq.Message;
 
 public class NotificationsFragment extends BaseFragment {
     private static NotificationsFragment instance;
     private RecyclerView recycler_view;
     private NotificationsAdapter adapter;
     private static final String TAG = "NotificationsFragment";
+    private ArrayList<NotificationBean> notifications = new ArrayList<>();
     public static synchronized NotificationsFragment getInstance() {
         if (instance == null) {
             instance = new NotificationsFragment();
@@ -28,7 +36,7 @@ public class NotificationsFragment extends BaseFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContent(R.layout.fragment_notifications);
+        setContent(R.layout.fragment_notifications,true);
     }
 
     @Override
@@ -36,22 +44,31 @@ public class NotificationsFragment extends BaseFragment {
         super.onBaseCreateView();
         requestData();
         initView();
+        Web3MQNotification.getInstance().setOnNotificationMessageEvent(new NotificationMessageCallback() {
+
+            @Override
+            public void onNotificationMessage(ArrayList<NotificationBean> response) {
+                notifications.addAll(response);
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
     private void requestData() {
-        showLoadingDialog();
-        Web3MQNotification.getInstance().getNotificationHistory(1, 10, new GetNotificationHistoryCallback() {
+        Web3MQNotification.getInstance().getNotificationHistory(1, 20, new GetNotificationHistoryCallback() {
             @Override
             public void onSuccess(NotificationsBean notificationsBean) {
-                adapter = new NotificationsAdapter(getActivity(),notificationsBean.result);
+                notifications.clear();
+                notifications = notificationsBean.result;
+                adapter = new NotificationsAdapter(getActivity(),notifications);
                 recycler_view.setAdapter(adapter);
-                hideLoadingDialog();
+                stopRefresh();
             }
 
             @Override
             public void onFail(String error) {
                 Log.e(TAG,"onFail:"+error);
-                hideLoadingDialog();
+                stopRefresh();
             }
         });
     }
@@ -59,5 +76,17 @@ public class NotificationsFragment extends BaseFragment {
     private void initView() {
         recycler_view = rootView.findViewById(R.id.recycler_view);
         recycler_view.setLayoutManager(new LinearLayoutManager(getActivity(),LinearLayoutManager.VERTICAL,false));
+        setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestData();
+            }
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Web3MQNotification.getInstance().removeNotificationMessageEvent();
     }
 }

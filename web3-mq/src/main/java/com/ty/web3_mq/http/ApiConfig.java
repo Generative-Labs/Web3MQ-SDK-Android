@@ -26,6 +26,7 @@ public interface ApiConfig {
     String GROUP_CREATE = BASE_URL+"/api/groups/";
     String GROUP_INVITATION = BASE_URL+"/api/group_invitation/";
     String GET_GROUP_LIST = BASE_URL+"/api/groups/";
+    String GET_GROUP_MEMBERS = BASE_URL+"/api/group_members/";
     String CHANGE_MESSAGE_STATUS = BASE_URL+"/api/messages/status/";
     String GET_MESSAGE_HISTORY = BASE_URL+"/api/messages/history/";
     String GET_NOTIFICATION_HISTORY = BASE_URL+"/api/notification/history/";
