@@ -32,6 +32,7 @@ import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3mq.R;
 import com.ty.web3mq.adapter.GroupMembersAdapter;
 import com.ty.web3mq.adapter.MessagesAdapter;
+import com.ty.web3mq.adapter.RecyclerViewScrollListener;
 import com.ty.web3mq.bean.MessageItem;
 import com.ty.web3mq.utils.Tools;
 
@@ -49,6 +50,8 @@ public class MessageDMFragment extends BaseFragment{
     private ImageView iv_group_member;
     private ArrayList<MessageItem> messageList = new ArrayList<>();
     private AlertDialog alertDialog;
+    private static final int PAGE_SIZE = 20;
+    private int currentPage = 1;
     public static synchronized MessageDMFragment getInstance(String chatid, String chat_type) {
         if (instance == null) {
             instance = new MessageDMFragment();
@@ -69,7 +72,7 @@ public class MessageDMFragment extends BaseFragment{
     @Override
     protected void onBaseCreateView() {
         super.onBaseCreateView();
-        requestData();
+        requestData(1, PAGE_SIZE);
         initView();
         setListener();
         observeMessageReceive();
@@ -78,7 +81,11 @@ public class MessageDMFragment extends BaseFragment{
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        Web3MQMessageManager.getInstance().removeChatMessageCallback(chatid);
+        if(chat_type.equals("user")){
+            Web3MQMessageManager.getInstance().removeDMCallback(chatid);
+        }else if(chat_type.equals("group")){
+            Web3MQMessageManager.getInstance().removeGroupMessageCallback(chatid);
+        }
     }
 
     private void setListener() {
@@ -182,16 +189,29 @@ public class MessageDMFragment extends BaseFragment{
     }
 
     private void observeMessageReceive() {
-        Web3MQMessageManager.getInstance().addChatMessageCallback(chatid, new MessageCallback() {
-            @Override
-            public void onMessage(com.ty.web3_mq.websocket.bean.MessageBean message) {
-                MessageItem messageItem = new MessageItem();
-                messageItem.from = message.from;
-                messageItem.content = message.payload;
-                messageItem.timestamp = message.timestamp;
-                updateMessage(messageItem);
-            }
-        });
+        if(chat_type.equals("user")){
+            Web3MQMessageManager.getInstance().addDMCallback(chatid, new MessageCallback() {
+                @Override
+                public void onMessage(com.ty.web3_mq.websocket.bean.MessageBean message) {
+                    MessageItem messageItem = new MessageItem();
+                    messageItem.from = message.from;
+                    messageItem.content = message.payload;
+                    messageItem.timestamp = message.timestamp;
+                    updateMessage(messageItem);
+                }
+            });
+        }else if(chat_type.equals("group")){
+            Web3MQMessageManager.getInstance().addGroupMessageCallback(chatid, new MessageCallback() {
+                @Override
+                public void onMessage(com.ty.web3_mq.websocket.bean.MessageBean message) {
+                    MessageItem messageItem = new MessageItem();
+                    messageItem.from = message.from;
+                    messageItem.content = message.payload;
+                    messageItem.timestamp = message.timestamp;
+                    updateMessage(messageItem);
+                }
+            });
+        }
     }
 
     private void initView() {
@@ -204,9 +224,10 @@ public class MessageDMFragment extends BaseFragment{
         setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                requestData();
+                requestData(1,PAGE_SIZE);
             }
         });
+        recycler_view.addOnScrollListener(new RecyclerViewScrollListener(PAGE_SIZE));
         if(chat_type.equals("group")){
             iv_group_member.setVisibility(View.VISIBLE);
         }else{
@@ -214,11 +235,11 @@ public class MessageDMFragment extends BaseFragment{
         }
     }
 
-    private void requestData() {
+    private void requestData(int page, int size) {
         Bundle bundle = getArguments();
         chatid = bundle.getString("chatid");
         chat_type = bundle.getString("chat_type");
-        Web3MQMessageManager.getInstance().getMessageHistory(1, 20, chatid, new GetMessageHistoryCallback() {
+        Web3MQMessageManager.getInstance().getMessageHistory(page, size, chatid, new GetMessageHistoryCallback() {
             @Override
             public void onSuccess(MessagesBean messagesBean) {
                 messageList.clear();

@@ -1,7 +1,9 @@
 package com.ty.web3mq.fragment;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,8 +24,11 @@ import com.ty.web3_mq.http.beans.MessagesBean;
 import com.ty.web3_mq.http.beans.TopicBean;
 import com.ty.web3_mq.interfaces.CreateTopicCallback;
 import com.ty.web3_mq.interfaces.GetMessageHistoryCallback;
+import com.ty.web3_mq.interfaces.GetMyCreateTopicCallback;
 import com.ty.web3_mq.interfaces.GetMySubscribeTopicCallback;
+import com.ty.web3_mq.interfaces.PublishTopicMessageCallback;
 import com.ty.web3_mq.interfaces.SubscribeCallback;
+import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3mq.R;
 import com.ty.web3mq.adapter.ChatsAdapter;
 import com.ty.web3mq.bean.ChatItem;
@@ -41,6 +46,7 @@ public class TopicFragment extends BaseFragment{
     private static final int ACTION_SUBSCRIBE = 1;
     private int topic_action = ACTION_CREATE;
     private TextView tv_create_topic,tv_subscribe_topic;
+    private AlertDialog publishDialog;
     public static synchronized TopicFragment getInstance() {
         if (instance == null) {
             instance = new TopicFragment();
@@ -63,7 +69,7 @@ public class TopicFragment extends BaseFragment{
     }
 
     private void requestData() {
-        Web3MQTopic.getInstance().getMySubscribeTopicList(1, 20, new GetMySubscribeTopicCallback() {
+        Web3MQTopic.getInstance().getMyCreateTopicList(1, 20, new GetMyCreateTopicCallback() {
             @Override
             public void onSuccess(ArrayList<TopicBean> topicList) {
                 chats.clear();
@@ -93,7 +99,8 @@ public class TopicFragment extends BaseFragment{
         chatsAdapter.setOnItemClickListener(new ChatsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-
+                ChatItem chatItem = chats.get(position);
+                showPublishMessageDialog(chatItem.chatid);
             }
         });
     }
@@ -135,8 +142,8 @@ public class TopicFragment extends BaseFragment{
         Button btn_cancel = view.findViewById(R.id.btn_cancel);
         EditText et_input_name = view.findViewById(R.id.et_input_name);
         if(topic_action == ACTION_CREATE){
-            et_input_name.setText("Topic Name");
-            btn_topic_action.setHint("Create Topic");
+            et_input_name.setHint("Topic Name");
+            btn_topic_action.setText("Create Topic");
             btn_topic_action.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -144,8 +151,8 @@ public class TopicFragment extends BaseFragment{
                 }
             });
         }else if(topic_action == ACTION_SUBSCRIBE){
-            et_input_name.setText("Topic ID");
-            btn_topic_action.setHint("Subscribe Topic");
+            et_input_name.setHint("Topic ID");
+            btn_topic_action.setText("Subscribe Topic");
             btn_topic_action.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -203,6 +210,41 @@ public class TopicFragment extends BaseFragment{
                 if(bottomSheetDialog !=null){
                     bottomSheetDialog.dismiss();
                 }
+            }
+        });
+    }
+
+    public void showPublishMessageDialog(String topic_id){
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        View v = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_publish_topic,null);
+        EditText et_topic_title = v.findViewById(R.id.et_topic_title);
+        EditText et_topic_content = v.findViewById(R.id.et_topic_content);
+        Button btn_publish = v.findViewById(R.id.btn_publish);
+        btn_publish.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String title = et_topic_title.getText().toString();
+                String content = et_topic_content.getText().toString();
+                publishTopic(topic_id, title, content);
+            }
+        });
+        builder.setView(v);
+        publishDialog = builder.create();
+        publishDialog.show();
+        publishDialog.getWindow().setLayout(CommonUtils.dp2px(getActivity(),300),CommonUtils.dp2px(getActivity(),500));
+    }
+
+    private void publishTopic(String topic_id, String title, String content){
+        Web3MQTopic.getInstance().publishTopicMessage(topic_id, title, content, new PublishTopicMessageCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(getActivity(),"publish success",Toast.LENGTH_SHORT).show();
+                publishDialog.dismiss();
+            }
+
+            @Override
+            public void onFail(String error) {
+                Toast.makeText(getActivity(),"publish error:"+error,Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -37,7 +37,7 @@ public class NotificationsAdapter extends RecyclerView.Adapter<RecyclerView.View
         NotificationHistoryViewHolder viewHolder = (NotificationHistoryViewHolder) holder;
         viewHolder.setNotificationTitle(notification.payload.title);
         viewHolder.setNotificationContent(notification.payload.content);
-        viewHolder.setNotificationTime(DateUtils.getTimeString(notification.timestamp));
+        viewHolder.setNotificationTime(DateUtils.getTimeStringM(notification.timestamp));
     }
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {

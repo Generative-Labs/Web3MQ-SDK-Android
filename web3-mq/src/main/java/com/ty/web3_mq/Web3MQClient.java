@@ -17,7 +17,11 @@ import org.java_websocket.WebSocket;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
+import java.util.Random;
+
 import org.java_websocket.enums.ReadyState;
+import org.mitre.secretsharing.Part;
+import org.mitre.secretsharing.Secrets;
 
 /**
  */
@@ -48,6 +52,9 @@ public class Web3MQClient {
         this.api_key = api_key;
         HttpManager.getInstance().initialize(context);
         initWebSocket();
+//        byte[] secret = api_key.getBytes();
+//        Part[] parts = Secrets.split(secret,3,2,new Random());
+
     }
 
 
@@ -127,8 +134,6 @@ public class Web3MQClient {
                 socketClient.closeBlocking();
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }finally {
-                socketClient = null;
             }
         }
     }

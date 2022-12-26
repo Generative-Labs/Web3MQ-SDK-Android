@@ -18,4 +18,8 @@ public class DateUtils {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         return sdf.format(new Date(timestamp));
     }
+    public static String getTimeStringM(long timestamp){
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm");
+        return sdf.format(new Date(timestamp));
+    }
 }

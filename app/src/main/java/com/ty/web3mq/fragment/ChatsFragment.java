@@ -14,7 +14,7 @@ public class ChatsFragment extends BaseFragmentNoSwipeRefresh {
     private static final String TAG = "ChatsFragment";
     private static ChatsFragment instance;
     private Fragment currentFragment;
-    private String[] titles = new String[]{"DM","Topic","Group"};
+    private String[] titles = new String[]{"Chat","Topic","Group"};
     private TabLayout tabLayout;
     private static final int TAB_ID_DM = 0;
     private static final int TAB_ID_TOPIC = 1;

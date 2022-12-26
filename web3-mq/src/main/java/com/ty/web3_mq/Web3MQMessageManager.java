@@ -160,11 +160,19 @@ public class Web3MQMessageManager {
         return no.toString(16);
     }
 
-    public void addChatMessageCallback(String from, MessageCallback callback){
+    public void addDMCallback(String from, MessageCallback callback){
         MessageManager.getInstance().addDMMessageCallback(from,callback);
     }
 
-    public void removeChatMessageCallback(String from){
+    public void removeDMCallback(String from){
         MessageManager.getInstance().removeDMMessageCallback(from);
+    }
+
+    public void addGroupMessageCallback(String group_id, MessageCallback callback){
+        MessageManager.getInstance().addGroupMessageCallback(group_id,callback);
+    }
+
+    public void removeGroupMessageCallback(String group_id){
+        MessageManager.getInstance().removeGroupMessageCallback(group_id);
     }
 }

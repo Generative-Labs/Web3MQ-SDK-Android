@@ -6,6 +6,7 @@ import com.ty.web3_mq.http.request.CreateTopicRequest;
 import com.ty.web3_mq.http.request.GetMyCreateTopicListRequest;
 import com.ty.web3_mq.http.request.GetNotificationHistoryRequest;
 import com.ty.web3_mq.http.request.PublishTopicMessageRequest;
+import com.ty.web3_mq.http.response.BaseResponse;
 import com.ty.web3_mq.http.response.CommonResponse;
 import com.ty.web3_mq.http.response.CreateTopicResponse;
 import com.ty.web3_mq.http.response.GetNotificationHistoryResponse;
@@ -139,9 +140,9 @@ public class Web3MQTopic {
             request.content = content;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.topicid+request.timestamp).getBytes());
-            HttpManager.getInstance().post(ApiConfig.PUBLISH_TOPIC_MESSAGE, request, CommonResponse.class, new HttpManager.Callback<CommonResponse>() {
+            HttpManager.getInstance().post(ApiConfig.PUBLISH_TOPIC_MESSAGE, request, BaseResponse.class, new HttpManager.Callback<BaseResponse>() {
                 @Override
-                public void onResponse(CommonResponse response) {
+                public void onResponse(BaseResponse response) {
                     if(response.getCode()==0){
                         callback.onSuccess();
                     }else{

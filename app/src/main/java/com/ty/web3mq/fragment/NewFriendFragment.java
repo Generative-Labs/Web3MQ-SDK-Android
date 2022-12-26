@@ -107,6 +107,7 @@ public class NewFriendFragment extends BaseFragment {
             @Override
             public void onSuccess() {
                 Toast.makeText(getActivity(),"agree success",Toast.LENGTH_SHORT).show();
+                getActivity().finish();
             }
 
             @Override
@@ -137,33 +138,30 @@ public class NewFriendFragment extends BaseFragment {
     }
 
     private void showNewFriendDialog(){
-        if(alertDialog==null){
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            View v = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_new_friend,null);
-            Button btn_cancel = v.findViewById(R.id.btn_cancel);
-            Button btn_confirm = v.findViewById(R.id.btn_confirm);
-            EditText et_userid = v.findViewById(R.id.et_userid);
-            btn_cancel.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    alertDialog.dismiss();
-                }
-            });
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        View v = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_new_friend,null);
+        Button btn_cancel = v.findViewById(R.id.btn_cancel);
+        Button btn_confirm = v.findViewById(R.id.btn_confirm);
+        EditText et_userid = v.findViewById(R.id.et_userid);
+        btn_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+            }
+        });
 
-            btn_confirm.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String target_userid = et_userid.getText().toString();
-                    sendFriendRequest(target_userid);
-                }
-            });
-            builder.setView(v);
-            alertDialog = builder.create();
-            alertDialog.show();
-            alertDialog.getWindow().setLayout(CommonUtils.dp2px(getActivity(),335),CommonUtils.dp2px(getActivity(),205));
-        }else{
-            alertDialog.show();
-        }
+        btn_confirm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String target_userid = et_userid.getText().toString();
+                sendFriendRequest(target_userid);
+            }
+        });
+        builder.setView(v);
+        alertDialog = builder.create();
+        alertDialog.show();
+        alertDialog.getWindow().setLayout(CommonUtils.dp2px(getActivity(),335),CommonUtils.dp2px(getActivity(),205));
+
     }
 
     private void sendFriendRequest(String target_userid){

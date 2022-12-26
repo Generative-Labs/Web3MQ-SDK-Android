@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.http.beans.NotificationBean;
@@ -31,6 +32,7 @@ public class MessageManager {
     private volatile static MessageManager messageManager;
     private static final String TAG = "MessageManager";
     private Handler handler = new Handler(Looper.getMainLooper());
+    private Gson gson = new Gson();
     private MessageManager() {
 
     }
@@ -91,8 +93,7 @@ public class MessageManager {
                             NotificationBean notification = new NotificationBean();
                             notification.from = message.getComeFrom();
                             notification.messageid = message.getMessageId();
-                            notification.payload = new NotificationPayload();
-                            notification.payload.content = message.getPayload().toStringUtf8();
+                            notification.payload = gson.fromJson(message.getPayload().toStringUtf8(),NotificationPayload.class);
                             notification.timestamp = message.getTimestamp();
                             notification.cipher_suite = message.getCipherSuite();
                             notification.from_sign = message.getFromSign();
@@ -138,6 +139,22 @@ public class MessageManager {
                             });
                         }
                     }
+                    for(String group_id: groupMessageCallbackHashMap.keySet()){
+                        if(group_id.equals(message.getContentTopic())){
+                            MessageBean messageBean= new MessageBean();
+                            messageBean.from = message.getComeFrom();
+                            messageBean.payload = message.getPayload().toStringUtf8();
+                            messageBean.timestamp = message.getTimestamp();
+                            MessageCallback callback = groupMessageCallbackHashMap.get(group_id);
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    callback.onMessage(messageBean);
+                                }
+                            });
+                        }
+                    }
+
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
                 }
@@ -177,6 +194,13 @@ public class MessageManager {
     }
     public void removeDMMessageCallback(String from){
         DMMessageCallbackHashMap.remove(from);
+    }
+
+    public void addGroupMessageCallback(String group_id, MessageCallback callback) {
+        groupMessageCallbackHashMap.put(group_id,callback);
+    }
+    public void removeGroupMessageCallback(String group_id){
+        groupMessageCallbackHashMap.remove(group_id);
     }
 
     public void addTopicMessageCallback(String topic_id, MessageCallback callback){

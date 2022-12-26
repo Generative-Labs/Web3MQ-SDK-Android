@@ -26,6 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Web3MQClient.getInstance().init(this,"rkkJARiziBQCscgg");
         setContentView(R.layout.activity_login);
         loginFragment = LoginFragment.getInstance();
         FragmentTransaction transaction = getSupportFragmentManager()

@@ -43,7 +43,6 @@ public class ProfileFragment extends BaseFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContent(R.layout.fragment_profile,false);
-
     }
 
     @Override
@@ -100,9 +99,6 @@ public class ProfileFragment extends BaseFragment {
             @Override
             public void onClick(View v) {
                 Web3MQClient.getInstance().close();
-                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
                 getActivity().finish();
             }
         });

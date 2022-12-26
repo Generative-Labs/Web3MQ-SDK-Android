@@ -14,8 +14,11 @@ import com.ty.web3_mq.http.beans.ContactBean;
 import com.ty.web3_mq.http.beans.ContactsBean;
 import com.ty.web3_mq.interfaces.GetContactsCallback;
 import com.ty.web3mq.R;
+import com.ty.web3mq.activity.DMChatActivity;
 import com.ty.web3mq.activity.NewFriendActivity;
 import com.ty.web3mq.adapter.ContactsAdapter;
+import com.ty.web3mq.adapter.RecyclerViewScrollListener;
+import com.ty.web3mq.utils.Constants;
 
 import java.util.ArrayList;
 
@@ -24,6 +27,10 @@ public class ContactsFragment extends BaseFragment {
     private RecyclerView recycler_view;
     private ContactsAdapter contactsAdapter;
     private static final String TAG = "ContactsFragment";
+    private ArrayList<ContactBean> contacts = new ArrayList<>();
+    private static final int PAGE_SIZE = 20;
+    private int currentPage = 1;
+    private RecyclerViewScrollListener scrollListener;
     public static synchronized ContactsFragment getInstance() {
         if (instance == null) {
             instance = new ContactsFragment();
@@ -40,54 +47,73 @@ public class ContactsFragment extends BaseFragment {
     @Override
     protected void onBaseCreateView() {
         super.onBaseCreateView();
-        requestData();
+        requestData(1,PAGE_SIZE);
         initView();
     }
 
-    private void requestData() {
-        Web3MQContacts.getInstance().getContactList(1, 20, new GetContactsCallback() {
+    private void requestData(int page, int size) {
+        Web3MQContacts.getInstance().getContactList(page, size, new GetContactsCallback() {
             @Override
             public void onSuccess(ContactsBean contactsBean) {
-                ArrayList<ContactBean> contacts = contactsBean.result;
-                updateContactsView(contacts);
-                Log.i(TAG,"total: "+contactsBean.total);
+                contacts.addAll(contactsBean.result);
+                updateContactsView();
+                currentPage = page;
+                scrollListener.setMaxLoadCount(currentPage*PAGE_SIZE);
                 stopRefresh();
             }
 
             @Override
             public void onFail(String error) {
-                Log.e(TAG,"onFail:"+error);
                 stopRefresh();
             }
         });
     }
 
-    private void updateContactsView(ArrayList<ContactBean> contactBeans){
-        contactsAdapter = new ContactsAdapter(getActivity(),contactBeans);
-        recycler_view.setAdapter(contactsAdapter);
-        contactsAdapter.setOnItemClickListener(new ContactsAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(int position) {
-                if(position == 0){
-                    // new friend
-                    Intent intent = new Intent(getActivity(), NewFriendActivity.class);
-                    startActivity(intent);
-                }else{
-                    // contact item click
+    private void updateContactsView(){
+//        if(contactsAdapter==null){
+            contactsAdapter = new ContactsAdapter(getActivity(),contacts);
+            recycler_view.setAdapter(contactsAdapter);
+            contactsAdapter.setOnItemClickListener(new ContactsAdapter.OnItemClickListener() {
+                @Override
+                public void onItemClick(int position) {
+                    if(position == 0){
+                        // new friend
+                        Intent intent = new Intent(getActivity(), NewFriendActivity.class);
+                        startActivity(intent);
+                    }else{
+                        ContactBean contact = contacts.get(position-1);
+                        // contact item click
+                        Intent intent = new Intent(getActivity(), DMChatActivity.class);
+                        intent.putExtra(Constants.INTENT_CHAT_TYPE,"user");
+                        intent.putExtra(Constants.INTENT_CHAT_ID,contact.userid);
+                        startActivity(intent);
+                    }
                 }
-            }
-        });
+            });
+//        }else{
+//            int lastCount = currentPage*PAGE_SIZE;
+//            contactsAdapter.notifyItemRangeInserted(lastCount,contacts.size()-lastCount);
+//        }
+
     }
 
 
     private void initView() {
         recycler_view = rootView.findViewById(R.id.recycler_view_contacts);
         recycler_view.setLayoutManager(new LinearLayoutManager(getActivity(),LinearLayoutManager.VERTICAL,false));
-        updateContactsView(null);
+        scrollListener = new RecyclerViewScrollListener(PAGE_SIZE){
+            @Override
+            public void onScrollToBottom() {
+                requestData(currentPage+1,PAGE_SIZE);
+            }
+        };
+        recycler_view.addOnScrollListener(scrollListener);
+        updateContactsView();
         setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                requestData();
+                contacts.clear();
+                requestData(1,PAGE_SIZE);
             }
         });
     }
