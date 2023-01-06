@@ -1,5 +1,6 @@
 package com.ty.web3_mq;
 
+import android.util.Base64;
 import android.util.Log;
 
 import com.google.protobuf.ByteString;
@@ -45,16 +46,17 @@ public class Web3MQMessageManager {
 
     public void changeMessageStatusRequest(String[] message_ids,String topic,String status, ChangeMessageStatusRequestCallback callback){
         try {
-            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
-            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
             ChangeMessageStatusRequest request = new ChangeMessageStatusRequest();
-            request.userid = "user:"+pub_key;
+            request.userid = DefaultSPHelper.getInstance().getUserID();
             request.messages = message_ids;
             request.topic = topic;
             request.status = status;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.status+request.timestamp).getBytes());
-            HttpManager.getInstance().post(ApiConfig.CHANGE_MESSAGE_STATUS, request, BaseResponse.class, new HttpManager.Callback<BaseResponse>() {
+            HttpManager.getInstance().post(ApiConfig.CHANGE_MESSAGE_STATUS, request,pub_key,did_key,BaseResponse.class, new HttpManager.Callback<BaseResponse>() {
                 @Override
                 public void onResponse(BaseResponse response) {
                     if(response.getCode()==0){
@@ -77,16 +79,17 @@ public class Web3MQMessageManager {
 
     public void getMessageHistory(int page, int size, String topic_id, GetMessageHistoryCallback callback){
         try {
-            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
-            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
             GetMessageHistoryRequest request = new GetMessageHistoryRequest();
-            request.userid = "user:"+pub_key;
+            request.userid = DefaultSPHelper.getInstance().getUserID();
             request.topic = topic_id;
             request.page = page;
             request.size = size;
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.topic+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.GET_MESSAGE_HISTORY, request, GetMessageHistoryResponse.class, new HttpManager.Callback<GetMessageHistoryResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_MESSAGE_HISTORY, request,pub_key,did_key, GetMessageHistoryResponse.class, new HttpManager.Callback<GetMessageHistoryResponse>() {
                 @Override
                 public void onResponse(GetMessageHistoryResponse response) {
                     if(response.getCode()==0){
@@ -114,9 +117,9 @@ public class Web3MQMessageManager {
         }
         Log.i(TAG,"-----sendMessage-----");
         try {
-            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
-            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
-            String user_id = "user:"+pub_key;
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String user_id = DefaultSPHelper.getInstance().getUserID();
             long timestamp = System.currentTimeMillis();
             String node_id = Web3MQClient.getInstance().getNodeId();
             String msg_id = GenerateMessageID(user_id, topic_id, timestamp, msg.getBytes());
@@ -142,6 +145,7 @@ public class Web3MQMessageManager {
             Log.i(TAG,"needStore:"+needStore);
             builder.setPayload(ByteString.copyFrom(msg.getBytes()));
             Log.i(TAG,"payload:"+msg);
+            builder.setValidatePubKey(Base64.encodeToString(Ed25519.hexStringToBytes(pub_key),Base64.NO_WRAP));
             byte[] sendMessageBytes = CommonUtils.appendPrefix(WebsocketConfig.category, WebsocketConfig.PbTypeMessage, builder.build().toByteArray());
             Web3MQClient.getInstance().getSocketClient().send(sendMessageBytes);
         } catch (Exception e) {

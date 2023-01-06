@@ -26,6 +26,54 @@ public class DefaultSPHelper {
         return instance;
     }
 
+    public void saveMainPrivate(String prv){
+        put(Constant.SP_ED25519_MAIN_PRV,prv);
+    }
+
+    public void saveMainPublic(String pub){
+        put(Constant.SP_ED25519_MAIN_PUB,pub);
+    }
+
+    public void saveTempPrivate(String prv){
+        put(Constant.SP_ED25519_TEMP_PRV,prv);
+    }
+
+    public void saveTempPublic(String pub){
+        put(Constant.SP_ED25519_TEMP_PUB,pub);
+    }
+
+    public void saveUserID(String userID){
+        put(Constant.SP_USER_ID, userID);
+    }
+
+    public void saveDidKey(String didKey){
+        put(Constant.SP_DID_KEY, didKey);
+    }
+
+    public String getMainPrivate(){
+        return getString(Constant.SP_ED25519_MAIN_PRV);
+    }
+
+    public String getMainPublic(){
+        return getString(Constant.SP_ED25519_MAIN_PUB);
+    }
+
+    public String getTempPrivate(){
+        return getString(Constant.SP_ED25519_TEMP_PRV);
+    }
+
+    public String getTempPublic(){
+        return getString(Constant.SP_ED25519_TEMP_PUB);
+    }
+
+    public String getUserID(){
+        return getString(Constant.SP_USER_ID);
+    }
+
+    public String getDidKey(){
+        return getString(Constant.SP_DID_KEY);
+    }
+
     /**
      * 将String信息存入Preferences
      */

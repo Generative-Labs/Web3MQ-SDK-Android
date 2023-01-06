@@ -2,8 +2,10 @@ package com.ty.web3mq.fragment;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -26,6 +28,7 @@ public class NotificationsFragment extends BaseFragment {
     private NotificationsAdapter adapter;
     private static final String TAG = "NotificationsFragment";
     private ArrayList<NotificationBean> notifications = new ArrayList<>();
+    private ConstraintLayout cl_none_bg;
     public static synchronized NotificationsFragment getInstance() {
         if (instance == null) {
             instance = new NotificationsFragment();
@@ -60,8 +63,12 @@ public class NotificationsFragment extends BaseFragment {
             public void onSuccess(NotificationsBean notificationsBean) {
                 notifications.clear();
                 notifications = notificationsBean.result;
-                adapter = new NotificationsAdapter(getActivity(),notifications);
-                recycler_view.setAdapter(adapter);
+                if(notifications.size()>0){
+                    cl_none_bg.setVisibility(View.GONE);
+                    recycler_view.setVisibility(View.VISIBLE);
+                    adapter = new NotificationsAdapter(getActivity(),notifications);
+                    recycler_view.setAdapter(adapter);
+                }
                 stopRefresh();
             }
 
@@ -75,6 +82,7 @@ public class NotificationsFragment extends BaseFragment {
 
     private void initView() {
         recycler_view = rootView.findViewById(R.id.recycler_view);
+        cl_none_bg = rootView.findViewById(R.id.cl_none_bg);
         recycler_view.setLayoutManager(new LinearLayoutManager(getActivity(),LinearLayoutManager.VERTICAL,false));
         setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override

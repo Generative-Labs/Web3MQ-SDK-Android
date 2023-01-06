@@ -22,4 +22,23 @@ public class DateUtils {
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm");
         return sdf.format(new Date(timestamp));
     }
+
+    public static String getTimeStringNotification(long timestamp){
+        long gapTime = System.currentTimeMillis() - timestamp;
+        if(gapTime<60*1000){
+            return gapTime/1000 +"s ago";
+        }else if(gapTime<60*60*1000){
+            return gapTime/(60*1000) + "m ago";
+        }else if(gapTime<60*60*24*1000){
+            return gapTime/(60*60*1000) + "hours ago";
+        }else if(gapTime<60*60*24*7*1000){
+            return gapTime/(60*60*24*1000) + "days ago";
+        }else if(gapTime< 60L *60*24*30*1000){
+            return gapTime/(60*60*24*7*1000) + "weeks ago";
+        }else if(gapTime< 60L *60*24*365*1000){
+            return gapTime/(60L *60*24*30*1000) + "mouths ago";
+        }else{
+            return gapTime/(60L *60*24*365*1000) + "year ago";
+        }
+    }
 }

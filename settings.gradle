@@ -10,3 +10,4 @@ dependencyResolutionManagement {
 rootProject.name = "Web3mq"
 include ':app'
 include ':web3-mq'
+include ':walletDemo'

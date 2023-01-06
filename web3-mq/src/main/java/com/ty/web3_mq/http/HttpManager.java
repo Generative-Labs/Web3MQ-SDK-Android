@@ -1,14 +1,17 @@
 package com.ty.web3_mq.http;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.ANRequest;
 import com.androidnetworking.error.ANError;
+import com.androidnetworking.gsonparserfactory.GsonParserFactory;
 import com.androidnetworking.interceptors.HttpLoggingInterceptor;
 import com.androidnetworking.interfaces.ParsedRequestListener;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -45,7 +48,9 @@ public class HttpManager {
 
     public void initialize(final Context context) {
 //        this.mContext = context;
-        this.mGson = new Gson();
+        this.mGson = new GsonBuilder()
+                .disableHtmlEscaping()
+                .create();
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY );
         OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
@@ -55,18 +60,24 @@ public class HttpManager {
         okHttpClient.dispatcher().setMaxRequests(60);
 
         AndroidNetworking.initialize(context, okHttpClient);
+        AndroidNetworking.setParserFactory(new GsonParserFactory(mGson));
     }
 
     public void close(){
         AndroidNetworking.shutDown();
     }
 
-    public void post(final String url, final BaseRequest request, final Class clazz,
+    public void post(final String url, final BaseRequest request,String pub_key, String didKey, final Class clazz,
                      final Callback callback) {
         ANRequest.PostRequestBuilder builder = AndroidNetworking.post(url)
                 .addApplicationJsonBody(request)
                 .setContentType(ApiConfig.Headers.JSON_CONTENT_TYPE);
-
+        if(!TextUtils.isEmpty(pub_key)){
+            builder.addHeaders(ApiConfig.Headers.PUB_KEY,pub_key);
+        }
+        if(!TextUtils.isEmpty(didKey)){
+            builder.addHeaders(ApiConfig.Headers.DID_KEY,didKey);
+        }
         builder.build().getAsObject(clazz, new ParsedRequestListener() {
             @Override
             public void onResponse(Object response) {
@@ -84,7 +95,7 @@ public class HttpManager {
         });
     }
 
-    public void get(final String url,final BaseRequest request, final Class clazz,
+    public void get(final String url,final BaseRequest request,String pub_key, String didKey, final Class clazz,
                      final Callback callback) {
         StringBuilder final_url = new StringBuilder(url);
         if(request!=null){
@@ -99,8 +110,14 @@ public class HttpManager {
             }
         }
 
-        Log.i(TAG,"final_url:"+final_url.toString());
+        Log.i(TAG,"final_url:"+final_url);
         ANRequest.GetRequestBuilder builder = AndroidNetworking.get(final_url.toString());
+        if(!TextUtils.isEmpty(pub_key)){
+            builder.addHeaders(ApiConfig.Headers.PUB_KEY,pub_key);
+        }
+        if(!TextUtils.isEmpty(didKey)){
+            builder.addHeaders(ApiConfig.Headers.DID_KEY,didKey);
+        }
         builder.build().getAsObject(clazz, new ParsedRequestListener() {
             @Override
             public void onResponse(Object response) {

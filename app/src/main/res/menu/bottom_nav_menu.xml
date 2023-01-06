@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/navigation_chats"
-        android:icon="@drawable/ic_chat"
+        android:icon="@drawable/ic_chats"
         android:title="@string/title_chats"/>
 
     <item
@@ -13,7 +13,7 @@
 
     <item
         android:id="@+id/navigation_notifications"
-        android:icon="@drawable/ic_notifications"
+        android:icon="@drawable/ic_notification"
         android:title="@string/title_notifications"/>
 
     <item

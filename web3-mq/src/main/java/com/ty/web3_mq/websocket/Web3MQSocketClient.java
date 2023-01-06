@@ -1,9 +1,11 @@
 package com.ty.web3_mq.websocket;
 
 import android.os.Handler;
+import android.util.Base64;
 import android.util.Log;
 
 import com.ty.web3_mq.utils.CommonUtils;
+import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
 import org.java_websocket.client.WebSocketClient;
@@ -75,11 +77,13 @@ public class Web3MQSocketClient extends WebSocketClient {
     }
 
     private void sendConnectCommand(){
+        String pub_key = DefaultSPHelper.getInstance().getTempPublic();
         Heartbeat.ConnectCommand.Builder builder = Heartbeat.ConnectCommand.newBuilder();
         builder.setNodeId(node_id);
         builder.setUserId(userid);
         long timestamp = System.currentTimeMillis();
         builder.setTimestamp(timestamp);
+        builder.setValidatePubKey(Base64.encodeToString(Ed25519.hexStringToBytes(pub_key),Base64.NO_WRAP));
         String sign_content = node_id+userid+timestamp;
         try {
             builder.setMsgSign(Ed25519.ed25519Sign(prv_key_seed,sign_content.getBytes()));

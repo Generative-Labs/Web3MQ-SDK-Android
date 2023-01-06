@@ -10,9 +10,12 @@ public interface ApiConfig {
 
 //    String BASE_URL ="https://testnet-ap-jp-1.web3mq.com";
     String BASE_URL = "https://dev-ap-jp-1.web3mq.com";
-    String USER_LOGIN = BASE_URL + "/api/user_login/";
+//    String USER_LOGIN = BASE_URL + "/api/user_login/";
+    String USER_REGISTER = BASE_URL + "/api/user_register_v2/";
+    String USER_RESET_PWD = BASE_URL + "/api/user_reset_password_v2/";
     String PING = BASE_URL + "/api/ping/";
     String CHANGE_NOTIFICATION_STATUS = BASE_URL + "/api/notification/status/";
+    String USER_LOGIN = BASE_URL + "/api/user_login_v2/";
     String GET_CHAT_LIST = BASE_URL + "/api/chats/";
     String GET_CONTACT_LIST = BASE_URL+ "/api/contacts/";
     String POST_FRIEND_REQUEST = BASE_URL+"/api/contacts/add_friends/";
@@ -39,7 +42,8 @@ public interface ApiConfig {
         String DATE_TIME = "DateTime";
         String REQUEST_ID = "RequestId";
         String ACCEPT_LANGUAGE = "Accept-Language";
-        String SIGN = "Sign";
+        String PUB_KEY = "web3mq-request-pubkey";
+        String DID_KEY = "didkey";
         String AUTHORIZATION = "Authorization";
         String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
     }

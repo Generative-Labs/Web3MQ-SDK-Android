@@ -2,12 +2,10 @@ package com.ty.web3_mq;
 
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
-import com.ty.web3_mq.http.beans.GroupMembersBean;
 import com.ty.web3_mq.http.request.CreateGroupRequest;
 import com.ty.web3_mq.http.request.GetGroupListRequest;
 import com.ty.web3_mq.http.request.GetGroupMembersRequest;
 import com.ty.web3_mq.http.request.InvitationGroupRequest;
-import com.ty.web3_mq.http.response.ContactsResponse;
 import com.ty.web3_mq.http.response.CreateGroupResponse;
 import com.ty.web3_mq.http.response.GroupMembersResponse;
 import com.ty.web3_mq.http.response.GroupsResponse;
@@ -16,7 +14,6 @@ import com.ty.web3_mq.interfaces.CreateGroupCallback;
 import com.ty.web3_mq.interfaces.GetGroupListCallback;
 import com.ty.web3_mq.interfaces.GetGroupMembersCallback;
 import com.ty.web3_mq.interfaces.InvitationGroupCallback;
-import com.ty.web3_mq.utils.Constant;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
@@ -39,14 +36,15 @@ public class Web3MQGroup {
 
     public void createGroup(String group_name, CreateGroupCallback callback){
         try {
-            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
-            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
             CreateGroupRequest request = new CreateGroupRequest();
             request.group_name = group_name;
-            request.userid = "user:"+pub_key;
+            request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
-            HttpManager.getInstance().post(ApiConfig.GROUP_CREATE, request, CreateGroupResponse.class, new HttpManager.Callback<CreateGroupResponse>() {
+            HttpManager.getInstance().post(ApiConfig.GROUP_CREATE, request,pub_key,did_key,CreateGroupResponse.class, new HttpManager.Callback<CreateGroupResponse>() {
                 @Override
                 public void onResponse(CreateGroupResponse response) {
                     if(response.getCode()==0){
@@ -69,15 +67,16 @@ public class Web3MQGroup {
 
     public void invitation(String groupid, String[] member_ids, InvitationGroupCallback callback){
         try {
-            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
-            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
             InvitationGroupRequest request = new InvitationGroupRequest();
             request.groupid = groupid;
-            request.userid = "user:"+pub_key;
+            request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.members = member_ids;
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.groupid+request.timestamp).getBytes());
-            HttpManager.getInstance().post(ApiConfig.GROUP_INVITATION, request, InvitationGroupResponse.class, new HttpManager.Callback<InvitationGroupResponse>() {
+            HttpManager.getInstance().post(ApiConfig.GROUP_INVITATION, request,pub_key,did_key, InvitationGroupResponse.class, new HttpManager.Callback<InvitationGroupResponse>() {
                 @Override
                 public void onResponse(InvitationGroupResponse response) {
                     if(response.getCode()==0){
@@ -100,15 +99,16 @@ public class Web3MQGroup {
 
     public void getGroupList(int page, int size, GetGroupListCallback callback){
         try {
-            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
-            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
             GetGroupListRequest request = new GetGroupListRequest();
             request.page = page;
             request.size = size;
-            request.userid = "user:"+pub_key;
+            request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.GET_GROUP_LIST, request, GroupsResponse.class, new HttpManager.Callback<GroupsResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_GROUP_LIST, request,pub_key,did_key, GroupsResponse.class, new HttpManager.Callback<GroupsResponse>() {
                 @Override
                 public void onResponse(GroupsResponse response) {
                     if(response.getCode()==0){
@@ -131,16 +131,17 @@ public class Web3MQGroup {
 
     public void getGroupMembers(int page, int size, String groupid, GetGroupMembersCallback callback){
         try {
-            String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
-            String prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
             GetGroupMembersRequest request = new GetGroupMembersRequest();
             request.page = page;
             request.size = size;
-            request.userid = "user:"+pub_key;
+            request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
             request.groupid = groupid;
-            HttpManager.getInstance().get(ApiConfig.GET_GROUP_MEMBERS, request, GroupMembersResponse.class, new HttpManager.Callback<GroupMembersResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_GROUP_MEMBERS, request,pub_key, did_key, GroupMembersResponse.class, new HttpManager.Callback<GroupMembersResponse>() {
                 @Override
                 public void onResponse(GroupMembersResponse response) {
                     if(response.getCode()==0){

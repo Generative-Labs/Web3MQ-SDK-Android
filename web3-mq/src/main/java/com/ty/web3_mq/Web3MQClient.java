@@ -7,21 +7,16 @@ import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
 import com.ty.web3_mq.http.response.PingResponse;
 import com.ty.web3_mq.interfaces.ConnectCallback;
-import com.ty.web3_mq.utils.Constant;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.websocket.MessageManager;
 import com.ty.web3_mq.websocket.Web3MQSocketClient;
 import com.ty.web3_mq.websocket.WebsocketConfig;
 
-import org.java_websocket.WebSocket;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
-import java.util.Random;
 
 import org.java_websocket.enums.ReadyState;
-import org.mitre.secretsharing.Part;
-import org.mitre.secretsharing.Secrets;
 
 /**
  */
@@ -34,6 +29,7 @@ public class Web3MQClient {
     private String userid;
     private String node_id;
     private Web3MQClient() {
+
     }
 
     public static Web3MQClient getInstance() {
@@ -52,9 +48,6 @@ public class Web3MQClient {
         this.api_key = api_key;
         HttpManager.getInstance().initialize(context);
         initWebSocket();
-//        byte[] secret = api_key.getBytes();
-//        Part[] parts = Secrets.split(secret,3,2,new Random());
-
     }
 
 
@@ -68,18 +61,17 @@ public class Web3MQClient {
 
     public void startConnect(ConnectCallback connectCallback){
         MessageManager.getInstance().setConnectCallback(connectCallback);
-        this.prv_key_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED,null);
-        String pub_key = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR,null);
+        this.prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+        String user_id = DefaultSPHelper.getInstance().getUserID();
         Log.i(TAG,"get prv seed:"+prv_key_seed);
-        Log.i(TAG,"get pub key"+pub_key);
-        if(this.prv_key_seed==null || pub_key==null){
+        if(this.prv_key_seed==null || user_id==null){
             Log.e(TAG,"there is no account at local storage, please register first");
             return;
         }
-        this.userid = "user:"+pub_key;
+        this.userid = user_id;
         Log.i(TAG,"prv_key_seed" + this.prv_key_seed);
         Log.i(TAG,"userid" + this.userid);
-        HttpManager.getInstance().get(ApiConfig.PING, null, PingResponse.class, new HttpManager.Callback<PingResponse>() {
+        HttpManager.getInstance().get(ApiConfig.PING, null,null,null, PingResponse.class, new HttpManager.Callback<PingResponse>() {
             @Override
             public void onResponse(PingResponse response) {
                 node_id = response.getData().NodeID;

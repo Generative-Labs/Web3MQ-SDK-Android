@@ -5,7 +5,6 @@ import com.ty.web3_mq.http.HttpManager;
 import com.ty.web3_mq.http.request.ChatRequest;
 import com.ty.web3_mq.http.response.ChatResponse;
 import com.ty.web3_mq.interfaces.GetChatsCallback;
-import com.ty.web3_mq.utils.Constant;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
@@ -27,15 +26,16 @@ public class Web3MQChats {
 
     public void getChats(int page, int size, GetChatsCallback callback){
         try {
-            String userid = "user:"+DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PUB_HEX_STR);
-            String prv_seed = DefaultSPHelper.getInstance().getString(Constant.SP_ED25519_PRV_SEED);
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
             ChatRequest request = new ChatRequest();
             request.timestamp = System.currentTimeMillis();
-            request.userid = userid;
+            request.userid = DefaultSPHelper.getInstance().getUserID();
             request.page = page;
             request.size = size;
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_seed,(userid+request.timestamp).getBytes());
-            HttpManager.getInstance().get(ApiConfig.GET_CHAT_LIST, request, ChatResponse.class, new HttpManager.Callback<ChatResponse>() {
+            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            HttpManager.getInstance().get(ApiConfig.GET_CHAT_LIST, request,pub_key,did_key, ChatResponse.class, new HttpManager.Callback<ChatResponse>() {
                 @Override
                 public void onResponse(ChatResponse response) {
                     if(response.getCode()==0){

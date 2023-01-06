@@ -4,6 +4,7 @@ package com.ty.web3_mq.utils;
 //import org.web3j.crypto.Sign;
 //import org.web3j.utils.Numeric;
 
+import android.util.Base64;
 import android.util.Log;
 
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.DigestSignatureSpi;
@@ -29,7 +30,6 @@ public class CryptoUtils {
         System.arraycopy(signature.getS(), 0, retval, 32, 32);
         System.arraycopy(signature.getV(), 0, retval, 64, 1);
         return Numeric.toHexString(retval);
-//        return "";
     }
 
     public static String SHA3_ENCODE(String input){
@@ -51,5 +51,34 @@ public class CryptoUtils {
             hashtext = "0" + hashtext;
         }
         return hashtext;
+    }
+
+    public static String SHA256_ENCODE(String input){
+        MessageDigest md = null;
+        byte[] bt = input.getBytes();
+        try {
+            md = MessageDigest.getInstance("SHA-256");// 将此换成SHA-1、SHA-512、SHA-384等参数
+            md.update(bt);
+            return bytesToHexString(md.digest());
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
+    }
+
+    public static String bytesToHexString(byte[] src) {
+        StringBuilder builder = new StringBuilder();
+        if (src == null || src.length <= 0) {
+            return null;
+        }
+        String hv;
+        for (int i = 0; i < src.length; i++) {
+            // 以十六进制（基数 16）无符号整数形式返回一个整数参数的字符串表示形式，并转换为大写
+            hv = Integer.toHexString(src[i] & 0xFF).toUpperCase();
+            if (hv.length() < 2) {
+                builder.append(0);
+            }
+            builder.append(hv);
+        }
+        return builder.toString();
     }
 }

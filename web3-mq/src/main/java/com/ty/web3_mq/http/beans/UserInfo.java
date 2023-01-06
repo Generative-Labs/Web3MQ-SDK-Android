@@ -4,6 +4,7 @@ public class UserInfo {
     public String userid;
     public String did_value;
     public String did_type;
+    public String main_pubkey;
     public String pubkey;
     public String pubkey_type;
     public String wallet_address;
