@@ -1,7 +1,6 @@
 package com.ty.web3mq.fragment;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +20,6 @@ import com.ty.web3_mq.interfaces.GetMyProfileCallback;
 import com.ty.web3_mq.interfaces.PostMyProfileCallback;
 import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3mq.R;
-import com.ty.web3mq.activity.LoginActivity;
 
 public class ProfileFragment extends BaseFragment {
     private static final String TAG = "ProfileFragment";
@@ -54,18 +52,18 @@ public class ProfileFragment extends BaseFragment {
     }
 
     private void requestData(){
-        showLoadingDialog();
+        showLoading();
         Web3MQUser.getInstance().getMyProfile(new GetMyProfileCallback() {
             @Override
             public void onSuccess(ProfileBean profileBean) {
-                hideLoadingDialog();
+                hideLoading();
                 updateView(profileBean);
             }
 
             @Override
             public void onFail(String error) {
                 Toast.makeText(getActivity(),"error:"+error, Toast.LENGTH_SHORT).show();
-                hideLoadingDialog();
+                hideLoading();
             }
         });
     }

@@ -22,6 +22,7 @@ import com.ty.web3_mq.utils.SignUtils;
 
 import java.io.File;
 import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -98,6 +99,7 @@ public class HttpManager {
     public void get(final String url,final BaseRequest request,String pub_key, String didKey, final Class clazz,
                      final Callback callback) {
         StringBuilder final_url = new StringBuilder(url);
+
         if(request!=null){
             Type empMapType = new TypeToken<Map<String, String>>() {}.getType();
             Map<String, String> map = mGson.fromJson(mGson.toJson(request), empMapType);
@@ -109,7 +111,6 @@ public class HttpManager {
                 final_url.deleteCharAt(final_url.length() - 1);
             }
         }
-
         Log.i(TAG,"final_url:"+final_url);
         ANRequest.GetRequestBuilder builder = AndroidNetworking.get(final_url.toString());
         if(!TextUtils.isEmpty(pub_key)){

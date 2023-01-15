@@ -20,6 +20,8 @@ import com.ty.web3_mq.interfaces.SearchContactsCallback;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
+import java.net.URLEncoder;
+
 public class Web3MQContacts {
     private static final String TAG = "Chats";
     private volatile static Web3MQContacts contacts;
@@ -46,7 +48,7 @@ public class Web3MQContacts {
             request.size = size;
             request.timestamp = System.currentTimeMillis();
             request.userid = DefaultSPHelper.getInstance().getUserID();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_CONTACT_LIST, request, pub_key, did_key, ContactsResponse.class, new HttpManager.Callback<ContactsResponse>() {
                 @Override
                 public void onResponse(ContactsResponse response) {
@@ -78,7 +80,7 @@ public class Web3MQContacts {
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.keyword = keyword;
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.keyword+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.keyword+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_CONTACT_LIST, request, pub_key, did_key,ContactsResponse.class, new HttpManager.Callback<ContactsResponse>() {
                 @Override
                 public void onResponse(ContactsResponse response) {
@@ -141,7 +143,7 @@ public class Web3MQContacts {
             request.size = size;
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_SENT_FRIEND_REQUEST_LIST, request,pub_key,did_key, FriendRequestListResponse.class, new HttpManager.Callback<FriendRequestListResponse>() {
                 @Override
                 public void onResponse(FriendRequestListResponse response) {
@@ -205,7 +207,7 @@ public class Web3MQContacts {
             request.size = size;
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_RECEIVE_FRIEND_REQUEST_LIST, request,pub_key,did_key, FriendRequestListResponse.class, new HttpManager.Callback<FriendRequestListResponse>() {
                 @Override
                 public void onResponse(FriendRequestListResponse response) {

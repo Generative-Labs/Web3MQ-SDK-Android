@@ -47,7 +47,7 @@ public class CryptoUtils {
         String hashtext = no.toString(16);
 
         // Add preceding 0s to make it 32 bit
-        while (hashtext.length() < 32) {
+        while (hashtext.length() < 56) {
             hashtext = "0" + hashtext;
         }
         return hashtext;
@@ -59,6 +59,17 @@ public class CryptoUtils {
         try {
             md = MessageDigest.getInstance("SHA-256");// 将此换成SHA-1、SHA-512、SHA-384等参数
             md.update(bt);
+            return bytesToHexString(md.digest());
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
+    }
+
+    public static String SHA1_ENCODE(byte[] input){
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("SHA-1");// 将此换成SHA-1、SHA-512、SHA-384等参数
+            md.update(input);
             return bytesToHexString(md.digest());
         } catch (NoSuchAlgorithmException e) {
             return null;

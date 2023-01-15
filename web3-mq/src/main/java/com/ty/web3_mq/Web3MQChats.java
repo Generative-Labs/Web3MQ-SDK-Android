@@ -8,6 +8,8 @@ import com.ty.web3_mq.interfaces.GetChatsCallback;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
+import java.net.URLEncoder;
+
 public class Web3MQChats {
     private static final String TAG = "Chats";
     private volatile static Web3MQChats chats;
@@ -34,7 +36,7 @@ public class Web3MQChats {
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.page = page;
             request.size = size;
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_CHAT_LIST, request,pub_key,did_key, ChatResponse.class, new HttpManager.Callback<ChatResponse>() {
                 @Override
                 public void onResponse(ChatResponse response) {

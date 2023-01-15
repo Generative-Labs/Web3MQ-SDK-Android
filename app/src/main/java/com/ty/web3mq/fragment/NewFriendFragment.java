@@ -2,7 +2,6 @@ package com.ty.web3mq.fragment;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -16,8 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ty.web3_mq.Web3MQContacts;
-import com.ty.web3_mq.http.beans.ContactBean;
-import com.ty.web3_mq.http.beans.ContactsBean;
 import com.ty.web3_mq.http.beans.FriendRequestBean;
 import com.ty.web3_mq.http.beans.FriendRequestsBean;
 import com.ty.web3_mq.interfaces.FriendRequestCallback;
@@ -58,20 +55,20 @@ public class NewFriendFragment extends BaseFragment {
     }
 
     private void requestData() {
-        showLoadingDialog();
+        showLoading();
         Web3MQContacts.getInstance().getReceiveFriendRequestList(1, 20, new GetReceiveFriendRequestListCallback() {
 
             @Override
             public void onSuccess(FriendRequestsBean friendRequestBeans) {
                 updateNewFriendView(friendRequestBeans.result);
-                hideLoadingDialog();
+                hideLoading();
                 stopRefresh();
             }
 
             @Override
             public void onFail(String error) {
                 Toast.makeText(getActivity(),"get friend request fail. error:"+error,Toast.LENGTH_SHORT).show();
-                hideLoadingDialog();
+                hideLoading();
                 stopRefresh();
             }
         });

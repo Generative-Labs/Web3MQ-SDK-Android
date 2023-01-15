@@ -12,9 +12,7 @@ import androidx.annotation.Nullable;
 
 import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.Web3MQUser;
-import com.ty.web3_mq.http.beans.UserInfo;
 import com.ty.web3_mq.interfaces.ConnectCallback;
-import com.ty.web3_mq.interfaces.GetUserinfoCallback;
 import com.ty.web3_mq.interfaces.LoginCallback;
 import com.ty.web3_mq.interfaces.ResetPwdCallback;
 import com.ty.web3_mq.interfaces.SignupCallback;
@@ -72,7 +70,7 @@ public class Login2Fragment extends BaseFragment {
         btn_connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showLoadingDialog();
+                showLoading();
                 connect();
             }
         });
@@ -97,7 +95,7 @@ public class Login2Fragment extends BaseFragment {
     }
 
     private void sign_up(){
-        showLoadingDialog();
+        showLoading();
         String eth_prv_key = ETH_PRV_KEY;
         String eth_address = ETH_ADDRESS;
         String wallet_type = "eth";
@@ -105,7 +103,7 @@ public class Login2Fragment extends BaseFragment {
         String magicString = web3MQUser.generateMagicString(wallet_type,eth_address,password);
         Log.i(TAG,"magicString:"+magicString);
         //wallet sign for generate key
-        String keyGenerateSignature = web3MQUser.keyGenerateSign(eth_prv_key,eth_address,magicString);
+        String keyGenerateSignature = web3MQUser.getKeyGenerateSignContent(eth_address,magicString);
         Log.i(TAG,"keyGenerateSignature:"+keyGenerateSignature);
         String mainPrivateKeyHex = CryptoUtils.SHA256_ENCODE(keyGenerateSignature);
         //wallet sign for register
@@ -129,7 +127,7 @@ public class Login2Fragment extends BaseFragment {
 
             @Override
             public void onFail(String error) {
-                hideLoadingDialog();
+                hideLoading();
                 Log.i(TAG,"signUp fail: "+error);
             }
         });
@@ -146,22 +144,22 @@ public class Login2Fragment extends BaseFragment {
         String wallet_type = "eth";
         String password = "123456";
         String magicString = web3MQUser.generateMagicString(wallet_type,eth_address,password);
-        String keyGenerateSignature = web3MQUser.keyGenerateSign(eth_prv_key,eth_address,magicString);
+        String keyGenerateSignature = web3MQUser.getKeyGenerateSignContent(eth_address,magicString);
         String mainPrivateKeyHex = CryptoUtils.SHA256_ENCODE(keyGenerateSignature);
         String mainPublicKeyHex = Ed25519.generatePublicKey(mainPrivateKeyHex);
         Log.i(TAG,"mainPrivateKeyHex:"+mainPrivateKeyHex);
         Log.i(TAG,"mainPublicKeyHex:"+mainPublicKeyHex);
-        Web3MQUser.getInstance().getUserInfo(wallet_type, eth_address, new GetUserinfoCallback() {
-            @Override
-            public void onSuccess(UserInfo userInfo) {
-                loginRequest(userInfo.userid,wallet_type,eth_address,mainPrivateKeyHex,mainPublicKeyHex);
-            }
-
-            @Override
-            public void onFail(String error) {
-                Log.i(TAG,"GetUserInfo error "+error);
-            }
-        });
+//        Web3MQUser.getInstance().getUserInfo(wallet_type, eth_address, new GetUserinfoCallback() {
+//            @Override
+//            public void onSuccess(UserInfo userInfo) {
+//                loginRequest(userInfo.userid,wallet_type,eth_address,mainPrivateKeyHex,mainPublicKeyHex);
+//            }
+//
+//            @Override
+//            public void onFail(String error) {
+//                Log.i(TAG,"GetUserInfo error "+error);
+//            }
+//        });
     }
 
     private void loginRequest(String user_id,String wallet_type,String wallet_address,String main_prv_key,String main_pubkey){
@@ -180,7 +178,7 @@ public class Login2Fragment extends BaseFragment {
     }
 
     private void resetPwd(){
-        showLoadingDialog();
+        showLoading();
         String eth_prv_key = et_eth_prv_key.getText().toString().toLowerCase();
         String eth_address = et_eth_address.getText().toString().toLowerCase();
         String wallet_type = "eth";
@@ -188,7 +186,7 @@ public class Login2Fragment extends BaseFragment {
         String magicString = web3MQUser.generateMagicString(wallet_type,eth_address,password);
         Log.i(TAG,"magicString:"+magicString);
         //wallet sign for generate key
-        String keyGenerateSignature = web3MQUser.keyGenerateSign(eth_prv_key,eth_address,magicString);
+        String keyGenerateSignature = web3MQUser.getKeyGenerateSignContent(eth_address,magicString);
         Log.i(TAG,"keyGenerateSignature:"+keyGenerateSignature);
         String mainPrivateKeyHex = CryptoUtils.SHA256_ENCODE(keyGenerateSignature);
         //wallet sign for register
@@ -208,12 +206,12 @@ public class Login2Fragment extends BaseFragment {
             @Override
             public void onSuccess() {
                 Log.i(TAG,"reset pwd success");
-                hideLoadingDialog();
+                hideLoading();
             }
 
             @Override
             public void onFail(String error) {
-                hideLoadingDialog();
+                hideLoading();
                 Log.i(TAG,"reset pwd fail: "+error);
             }
         });
@@ -224,14 +222,14 @@ public class Login2Fragment extends BaseFragment {
             @Override
             public void onSuccess() {
                 // connect success
-                hideLoadingDialog();
+                hideLoading();
                 Intent intent = new Intent(getActivity(), HomePageActivity.class);
                 startActivity(intent);
             }
 
             @Override
             public void onFail(String error) {
-                hideLoadingDialog();
+                hideLoading();
                 Toast.makeText(getActivity(),"connect fail", Toast.LENGTH_SHORT).show();
             }
         });

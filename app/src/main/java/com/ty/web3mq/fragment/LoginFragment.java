@@ -1,6 +1,7 @@
 package com.ty.web3mq.fragment;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,13 +14,15 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.ty.web3_mq.Web3MQClient;
+import com.ty.web3_mq.Web3MQSign;
 import com.ty.web3_mq.Web3MQUser;
-import com.ty.web3_mq.http.beans.UserInfo;
 import com.ty.web3_mq.interfaces.ConnectCallback;
-import com.ty.web3_mq.interfaces.GetUserinfoCallback;
 import com.ty.web3_mq.interfaces.LoginCallback;
+import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
+import com.ty.web3_mq.interfaces.OnSignResponseMessageCallback;
 import com.ty.web3_mq.utils.CryptoUtils;
 import com.ty.web3_mq.utils.Ed25519;
+import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
 import com.ty.web3mq.R;
 import com.ty.web3mq.activity.HomePageActivity;
 import com.ty.web3mq.activity.LoginActivity;
@@ -35,8 +38,9 @@ public class LoginFragment extends BaseFragment {
     private TextView tv_wallet_address;
     private Button btn_login;
     private ImageView iv_back;
-    private static final String ETH_ADDRESS = "0x9E321289C659b17cd0A8c06FF760279e329f2eDF";
-    private static final String ETH_PRV_KEY = "02a713332838cf01b29b335fc5c276c2fac52be353b01ff6a80f08f43949cad2";
+    private String userID,wallet_type,wallet_address;
+    private static final String ETH_ADDRESS = "0xa7F31Db454fE3c36c7Bb186d209fF7F433aE0314";
+    private static final String ETH_PRV_KEY = "b189f059bddf6d87deb45e8c31fa93921f87af3d1849064aa1cad0fef35a3666";
     public static synchronized LoginFragment getInstance() {
         if (instance == null) {
             instance = new LoginFragment();
@@ -78,7 +82,8 @@ public class LoginFragment extends BaseFragment {
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                login();
+                showLoading();
+                sign();
             }
         });
 
@@ -91,28 +96,48 @@ public class LoginFragment extends BaseFragment {
         });
     }
 
-    private void login(){
-        String eth_prv_key = ETH_PRV_KEY.toLowerCase();
-        String eth_address = ETH_ADDRESS.toLowerCase();
+    private void sign(){
         String wallet_type = "eth";
         String password = view_input_pwd.getPwd();
-        String magicString = web3MQUser.generateMagicString(wallet_type,eth_address,password);
-        String keyGenerateSignature = web3MQUser.keyGenerateSign(eth_prv_key,eth_address,magicString);
-        String mainPrivateKeyHex = CryptoUtils.SHA256_ENCODE(keyGenerateSignature);
-        String mainPublicKeyHex = Ed25519.generatePublicKey(mainPrivateKeyHex);
-        Log.i(TAG,"mainPrivateKeyHex:"+mainPrivateKeyHex);
-        Log.i(TAG,"mainPublicKeyHex:"+mainPublicKeyHex);
-        Web3MQUser.getInstance().getUserInfo(wallet_type, eth_address, new GetUserinfoCallback() {
+        String magicString = web3MQUser.generateMagicString(wallet_type,wallet_address,password);
+        String signContent = web3MQUser.getKeyGenerateSignContent(wallet_address,magicString);
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(Web3MQSign.getInstance().generateSignDeepLink()));
+        startActivity(intent);
+
+        sendSign(signContent);
+        Web3MQSign.getInstance().setOnSignResponseMessageCallback(new OnSignResponseMessageCallback() {
             @Override
-            public void onSuccess(UserInfo userInfo) {
-                loginRequest(userInfo.userid,wallet_type,eth_address,mainPrivateKeyHex,mainPublicKeyHex);
+            public void onApprove(String signature) {
+                Log.i(TAG,"signature:"+signature);
+                String mainPrivateKeyHex = CryptoUtils.SHA256_ENCODE(signature);
+                String mainPublicKeyHex = Ed25519.generatePublicKey(mainPrivateKeyHex);
+                Log.i(TAG,"mainPrivateKeyHex:"+mainPrivateKeyHex);
+                Log.i(TAG,"mainPublicKeyHex:"+mainPublicKeyHex);
+                loginRequest(userID,wallet_type,wallet_address,mainPrivateKeyHex,mainPublicKeyHex);
             }
 
             @Override
-            public void onFail(String error) {
-                Log.i(TAG,"GetUserInfo error "+error);
+            public void onReject() {
+                hideLoading();
+                Toast.makeText(getActivity(),"sign reject",Toast.LENGTH_SHORT).show();
             }
         });
+
+    }
+
+    private void sendSign(String sign_raw){
+        BridgeMessageProposer proposer = new BridgeMessageProposer();
+        proposer.name = "Web3MQ_DAPP_DEMO";
+        proposer.url = "www.web3mq_dapp.com";
+        proposer.redirect = "redirect";
+        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,false);
+    }
+
+    public void setUserInfo(String userid,String wallet_type,String wallet_address){
+        this.userID = userid;
+        this.wallet_type = wallet_type;
+        this.wallet_address = wallet_address;
+        Log.i(TAG,"setUserInfo userid:"+userid+" wallet_type:"+wallet_type+" wallet_address:"+wallet_address);
     }
 
 
@@ -146,34 +171,25 @@ public class LoginFragment extends BaseFragment {
             @Override
             public void onSuccess() {
                 Log.i(TAG,"login success");
-                connect();
+                sendConnectCommand();
             }
 
             @Override
             public void onFail(String error) {
+                hideLoading();
                 Log.i(TAG,"login error "+error);
             }
         });
     }
 
-
-    private void connect(){
-        Web3MQClient.getInstance().startConnect(new ConnectCallback() {
+    private void sendConnectCommand(){
+        Web3MQClient.getInstance().sendConnectCommand(new OnConnectCommandCallback() {
             @Override
-            public void onSuccess() {
-                // connect success
-                hideLoadingDialog();
+            public void onConnectCommandResponse() {
+                hideLoading();
                 Intent intent = new Intent(getActivity(), HomePageActivity.class);
                 startActivity(intent);
             }
-
-            @Override
-            public void onFail(String error) {
-                hideLoadingDialog();
-                Toast.makeText(getActivity(),"connect fail", Toast.LENGTH_SHORT).show();
-            }
         });
     }
-
-
 }

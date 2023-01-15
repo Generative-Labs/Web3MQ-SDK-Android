@@ -23,6 +23,7 @@ import com.ty.web3_mq.websocket.WebsocketConfig;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
 import java.math.BigInteger;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 
 import web3mq.Message;
@@ -88,7 +89,7 @@ public class Web3MQMessageManager {
             request.page = page;
             request.size = size;
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.topic+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.topic+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_MESSAGE_HISTORY, request,pub_key,did_key, GetMessageHistoryResponse.class, new HttpManager.Callback<GetMessageHistoryResponse>() {
                 @Override
                 public void onResponse(GetMessageHistoryResponse response) {

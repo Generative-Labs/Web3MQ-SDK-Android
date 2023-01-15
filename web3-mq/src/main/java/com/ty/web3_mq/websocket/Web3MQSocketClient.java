@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
 
+import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
@@ -24,16 +25,13 @@ import web3mq.Heartbeat;
 public class Web3MQSocketClient extends WebSocketClient {
     private static final String TAG = "Web3MQClient";
     private String node_id;
-    private String userid;
-    private String prv_key_seed;
+    private ConnectCallback callback;
     public Web3MQSocketClient(URI serverUri) {
         super(serverUri);
     }
 
-    public void initConnectionParam(String node_id, String userid, String prv_key_seed){
+    public void initConnectionParam(String node_id){
         this.node_id = node_id;
-        this.userid = userid;
-        this.prv_key_seed = prv_key_seed;
     }
 
     @Override
@@ -42,7 +40,9 @@ public class Web3MQSocketClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-        sendConnectCommand();
+        if(callback!=null){
+            callback.onSuccess();
+        }
         Log.i(TAG,"WebSocketClient onOpen");
         Timer timer = new Timer(true);
         TimerTask timerTask = new TimerTask() {
@@ -62,38 +62,18 @@ public class Web3MQSocketClient extends WebSocketClient {
         Log.i(TAG,"send ping");
         KeepAlive.WebsocketPingCommand.Builder builder = KeepAlive.WebsocketPingCommand.newBuilder();
         builder.setNodeId(node_id);
-        builder.setUserId(userid);
+//        builder.setUserId(userid);
         long timestamp = System.currentTimeMillis();
         builder.setTimestamp(timestamp);
-        String sign_content = node_id+userid+timestamp;
-        try {
-            builder.setMsgSign(Ed25519.ed25519Sign(prv_key_seed,sign_content.getBytes()));
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TAG,"ed25519 Sign Error");
-        }
+//        String sign_content = node_id+userid+timestamp;
+//        try {
+//            builder.setMsgSign(Ed25519.ed25519Sign(prv_key_seed,sign_content.getBytes()));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            Log.e(TAG,"ed25519 Sign Error");
+//        }
         byte[] connectBytes = CommonUtils.appendPrefix(WebsocketConfig.category, WebsocketConfig.PbTypePingCommand, builder.build().toByteArray());
         this.send(connectBytes);
-    }
-
-    private void sendConnectCommand(){
-        String pub_key = DefaultSPHelper.getInstance().getTempPublic();
-        Heartbeat.ConnectCommand.Builder builder = Heartbeat.ConnectCommand.newBuilder();
-        builder.setNodeId(node_id);
-        builder.setUserId(userid);
-        long timestamp = System.currentTimeMillis();
-        builder.setTimestamp(timestamp);
-        builder.setValidatePubKey(Base64.encodeToString(Ed25519.hexStringToBytes(pub_key),Base64.NO_WRAP));
-        String sign_content = node_id+userid+timestamp;
-        try {
-            builder.setMsgSign(Ed25519.ed25519Sign(prv_key_seed,sign_content.getBytes()));
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TAG,"ed25519 Sign Error");
-        }
-        byte[] connectBytes = CommonUtils.appendPrefix(WebsocketConfig.category, WebsocketConfig.PbTypeConnectReqCommand, builder.build().toByteArray());
-        this.send(connectBytes);
-        Log.i(TAG,"sendConnectCommand");
     }
 
     @Override
@@ -114,5 +94,9 @@ public class Web3MQSocketClient extends WebSocketClient {
     @Override
     public void onError(Exception ex) {
         Log.e(TAG,"WebSocketClient onError "+ ex.getLocalizedMessage());
+    }
+
+    public void setConnectCallback(ConnectCallback connectCallback){
+        this.callback = connectCallback;
     }
 }

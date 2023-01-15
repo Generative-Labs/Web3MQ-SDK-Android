@@ -19,6 +19,10 @@ public class WebsocketConfig {
     // notification
     public static final byte PbTypeNotificationListResp = 0b00010100;
 
+    // connect to bridge
+    public static final byte PbTypeWeb3MQBridgeConnectCommand = 100;
+    public static final byte PbTypeWeb3MQBridgeConnectResp = 101;
+
     public static final int category = 10;
 
 

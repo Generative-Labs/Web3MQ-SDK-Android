@@ -115,7 +115,7 @@ public class MessageDMFragment extends BaseFragment{
     }
 
     private void getGroupMembers() {
-        showLoadingDialog();
+        showLoading();
         Web3MQGroup.getInstance().getGroupMembers(1, 20, chatid, new GetGroupMembersCallback() {
             @Override
             public void onSuccess(GroupMembersBean membersBean) {
@@ -124,14 +124,14 @@ public class MessageDMFragment extends BaseFragment{
                 for(MemberBean memberBean: members){
                     user_ids.add(memberBean.userid);
                 }
-                hideLoadingDialog();
+                hideLoading();
                 showMembersDialog(user_ids);
             }
 
             @Override
             public void onFail(String error) {
                 Toast.makeText(getActivity(),"get group members error:"+error,Toast.LENGTH_SHORT).show();
-                hideLoadingDialog();
+                hideLoading();
             }
         });
 

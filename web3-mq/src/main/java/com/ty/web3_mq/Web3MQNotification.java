@@ -10,6 +10,8 @@ import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 import com.ty.web3_mq.websocket.MessageManager;
 
+import java.net.URLEncoder;
+
 public class Web3MQNotification {
     private static final String TAG = "Web3MQNotification";
     private volatile static Web3MQNotification notification;
@@ -71,7 +73,7 @@ public class Web3MQNotification {
             request.page = page;
             request.size = size;
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.notice_type+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.notice_type+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_NOTIFICATION_HISTORY, request,pub_key,did_key, GetNotificationHistoryResponse.class, new HttpManager.Callback<GetNotificationHistoryResponse>() {
                 @Override
                 public void onResponse(GetNotificationHistoryResponse response) {

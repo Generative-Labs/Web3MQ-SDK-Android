@@ -31,6 +31,7 @@ import com.ty.web3_mq.utils.UserIDGenerator;
 
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 
 public class Web3MQUser {
@@ -56,7 +57,7 @@ public class Web3MQUser {
         this.salt = salt;
     }
 
-    public String keyGenerateSign(String wallet_prv_key, String wallet_address, String magic_str){
+    public String getKeyGenerateSignContent(String wallet_address, String magic_str){
         String signature_content = "Signing this message will allow this app to decrypt messages in the Web3MQ protocol for the following address: "+wallet_address+". This won’t cost you anything.\n" +
                 "\n" +
                 "If your Web3MQ wallet-associated password and this signature is exposed to any malicious app, this would result in exposure of Web3MQ account access and encryption keys, and the attacker would be able to read your messages.\n" +
@@ -64,8 +65,18 @@ public class Web3MQUser {
                 "In the event of such an incident, don’t panic. You can call Web3MQ’s key revoke API and service to revoke access to the exposed encryption key and generate a new one!\n" +
                 "\n" +
                 "Nonce: "+magic_str;
-        String registerSign = CryptoUtils.signMessage(wallet_prv_key, signature_content);
-        return registerSign;
+        return signature_content;
+    }
+
+    public String getRegisterSignContent(String wallet_name, String wallet_address, String your_domain_url, String nonce_content){
+        String str_date = CommonUtils.getDate();
+        return "Web3MQ wants you to sign in with your "+wallet_name+" account: \n" +
+                wallet_address+" \n" +
+                "For Web3MQ registration \n" +
+                "URI: "+your_domain_url+" \n" +
+                "Version: 1 \n" +
+                "Nonce: "+nonce_content+" \n" +
+                "Issued At: " + str_date;
     }
 
     public String[] registerSign(String wallet_prv_key,String wallet_type_name, String wallet_address, String your_domain_url, String nonce_content){
@@ -171,8 +182,9 @@ public class Web3MQUser {
             request.did_value = wallet_address;
             request.timestamp = System.currentTimeMillis();
             request.pubkey_type = "ed25519";
-            request.pubkey_value = Ed25519.generateKeyPair()[1];
-            String temporary_prv = Ed25519.generateKeyPair()[0];
+            String[] keyPair = Ed25519.generateKeyPair();
+            request.pubkey_value = keyPair[1];
+            String temporary_prv = keyPair[0];
             String temporary_pub = request.pubkey_value;
             request.pubkey_expired_timestamp = request.timestamp+this.expiredTime;
             request.signature_content = CryptoUtils.SHA3_ENCODE(user_id+request.pubkey_value+request.pubkey_expired_timestamp+request.timestamp);
@@ -185,7 +197,7 @@ public class Web3MQUser {
                     int code = response.getCode();
                     if(code==0){
                         DefaultSPHelper.getInstance().saveMainPrivate(mainPrivateKey);
-                        DefaultSPHelper.getInstance().saveMainPublic(mainPrivateKey);
+                        DefaultSPHelper.getInstance().saveMainPublic(main_pubkey);
                         DefaultSPHelper.getInstance().saveTempPrivate(temporary_prv);
                         DefaultSPHelper.getInstance().saveTempPublic(temporary_pub);
                         DefaultSPHelper.getInstance().saveUserID(user_id);
@@ -266,7 +278,7 @@ public class Web3MQUser {
             GetMyProfileRequest request = new GetMyProfileRequest();
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_MY_PROFILE, request,pub_key,did_key,ProfileResponse.class, new HttpManager.Callback<ProfileResponse>() {
                 @Override
                 public void onResponse(ProfileResponse response) {
@@ -335,7 +347,9 @@ public class Web3MQUser {
                 public void onResponse(UserInfoResponse response) {
                     if(response.getCode()==0){
                         callback.onSuccess(response.getData());
-                    }else{
+                    }else if(response.getCode() == 404){
+                        callback.onUserNotRegister();
+                    }else {
                         callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
                     }
                 }
@@ -360,7 +374,7 @@ public class Web3MQUser {
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.keyword = keyword;
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.keyword+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.keyword+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.SEARCH_USERS, request,pub_key,did_key, SearchUsersResponse.class, new HttpManager.Callback<SearchUsersResponse>() {
                 @Override
                 public void onResponse(SearchUsersResponse response) {

@@ -9,9 +9,13 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.http.beans.NotificationBean;
 import com.ty.web3_mq.http.beans.NotificationPayload;
+import com.ty.web3_mq.interfaces.BridgeConnectCallback;
+import com.ty.web3_mq.interfaces.BridgeMessageCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.MessageCallback;
 import com.ty.web3_mq.interfaces.NotificationMessageCallback;
+import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
+import com.ty.web3_mq.websocket.bean.BridgeMessage;
 import com.ty.web3_mq.websocket.bean.MessageBean;
 
 import java.nio.ByteBuffer;
@@ -19,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import web3mq.Bridge;
 import web3mq.Heartbeat;
 import web3mq.Message;
 
@@ -26,6 +31,8 @@ import web3mq.Message;
 public class MessageManager {
     private NotificationMessageCallback notificationMessageCallback;
     private ConnectCallback connectCallback;
+    private BridgeConnectCallback bridgeConnectCallback;
+    private BridgeMessageCallback bridgeMessageCallback;
     private HashMap<String, MessageCallback> DMMessageCallbackHashMap = new HashMap<>();
     private HashMap<String, MessageCallback> topicMessageCallbackHashMap = new HashMap<>();
     private HashMap<String, MessageCallback> groupMessageCallbackHashMap = new HashMap<>();
@@ -33,6 +40,10 @@ public class MessageManager {
     private static final String TAG = "MessageManager";
     private Handler handler = new Handler(Looper.getMainLooper());
     private Gson gson = new Gson();
+    private OnConnectCommandCallback connectCommandCallback;
+
+    public static final String MESSAGE_TYPE_BRIDGE = "Web3MQ/bridge";
+
     private MessageManager() {
 
     }
@@ -63,7 +74,7 @@ public class MessageManager {
         switch (pbType){
             case WebsocketConfig.PbTypeConnectRespCommand:
                 Log.i(TAG,"ConnectResp");
-                if(this.connectCallback!=null){
+                if(this.connectCommandCallback!=null){
                     try {
                         Heartbeat.ConnectCommand command = Heartbeat.ConnectCommand.parseFrom(data);
                         Log.i(TAG,"NodeId: "+command.getNodeId());
@@ -76,7 +87,7 @@ public class MessageManager {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            connectCallback.onSuccess();
+                            connectCommandCallback.onConnectCommandResponse();
                         }
                     });
 
@@ -118,12 +129,23 @@ public class MessageManager {
                 Log.i(TAG,"Message callback");
                 try {
                     Message.Web3MQMessage message = Message.Web3MQMessage.parseFrom(data);
+                    Log.i(TAG,"MessageType:"+message.getMessageType());
                     Log.i(TAG,"MessageId:"+message.getMessageId());
                     Log.i(TAG,"MessageType:"+message.getMessageType());
                     Log.i(TAG,"ComeFrom:"+message.getComeFrom());
                     Log.i(TAG,"Payload:"+message.getPayload().toStringUtf8());
                     Log.i(TAG,"PayloadType:"+message.getPayloadType());
                     Log.i(TAG,"ContentTopic:"+message.getContentTopic());
+                    if(MESSAGE_TYPE_BRIDGE.equals(message.getMessageType())){
+                        BridgeMessage bridgeMessage = gson.fromJson(message.getPayload().toStringUtf8(), BridgeMessage.class);
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                bridgeMessageCallback.onBridgeMessage(message.getComeFrom(), bridgeMessage);
+                            }
+                        });
+                    }
+
                     for(String come_from: DMMessageCallbackHashMap.keySet()){
                         if(come_from.equals(message.getComeFrom())){
                             MessageBean messageBean= new MessageBean();
@@ -171,10 +193,51 @@ public class MessageManager {
                     Log.i(TAG,"messageStatus: "+response.getMessageStatus());
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
-                    Log.e(TAG,"NotificationListResp parse error");
+                    Log.e(TAG,"parse error");
+                }
+                break;
+            case WebsocketConfig.PbTypeWeb3MQBridgeConnectResp:
+                Log.i(TAG,"BridgeConnectResp");
+                if(bridgeConnectCallback!=null){
+                    try {
+                        Bridge.Web3MQBridgeConnectCommand connectCommand = Bridge.Web3MQBridgeConnectCommand.parseFrom(data);
+                        Log.i(TAG,"Node ID:" + connectCommand.getNodeID());
+                        Log.i(TAG,"DApp ID:" + connectCommand.getDAppID());
+                        Log.i(TAG,"Topic ID:" + connectCommand.getTopicID());
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                bridgeConnectCallback.onConnectCallback();
+                            }
+                        });
+                    } catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                        Log.e(TAG,"parse error");
+                    }
                 }
                 break;
         }
+    }
+
+    public void setOnConnectCommandCallback(OnConnectCommandCallback connectCommandCallback){
+        this.connectCommandCallback = connectCommandCallback;
+    }
+
+
+    public void setBridgeMessageCallback(BridgeMessageCallback callback){
+        this.bridgeMessageCallback = callback;
+    }
+
+    public void removeBridgeMessageCallback(){
+        this.bridgeMessageCallback = null;
+    }
+
+    public void setBridgeConnectCallback(BridgeConnectCallback callback){
+        this.bridgeConnectCallback = callback;
+    }
+
+    public void removeBridgeConnectCallback(){
+        this.bridgeConnectCallback = null;
     }
 
     public void setOnNotificationMessageEvent(NotificationMessageCallback notificationMessageCallback){

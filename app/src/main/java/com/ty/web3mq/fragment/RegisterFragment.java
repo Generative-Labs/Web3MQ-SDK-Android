@@ -1,15 +1,11 @@
 package com.ty.web3mq.fragment;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.text.method.HideReturnsTransformationMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,14 +14,16 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.ty.web3_mq.Web3MQClient;
+import com.ty.web3_mq.Web3MQSign;
 import com.ty.web3_mq.Web3MQUser;
-import com.ty.web3_mq.http.beans.UserInfo;
 import com.ty.web3_mq.interfaces.ConnectCallback;
-import com.ty.web3_mq.interfaces.GetUserinfoCallback;
 import com.ty.web3_mq.interfaces.LoginCallback;
+import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
+import com.ty.web3_mq.interfaces.OnSignResponseMessageCallback;
 import com.ty.web3_mq.interfaces.SignupCallback;
 import com.ty.web3_mq.utils.CryptoUtils;
 import com.ty.web3_mq.utils.Ed25519;
+import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
 import com.ty.web3mq.R;
 import com.ty.web3mq.activity.HomePageActivity;
 import com.ty.web3mq.activity.LoginActivity;
@@ -41,8 +39,12 @@ public class RegisterFragment extends BaseFragment {
     private Button btn_create_new_user;
     private InputPwdView view_create_pwd, view_confirm_pwd;
     private ImageView iv_back;
-    private static final String ETH_ADDRESS = "0x9E321289C659b17cd0A8c06FF760279e329f2eDF";
-    private static final String ETH_PRV_KEY = "02a713332838cf01b29b335fc5c276c2fac52be353b01ff6a80f08f43949cad2";
+    private String wallet_name,wallet_type,wallet_address;
+    private boolean keyGenerateSignSuccess = false;
+    private static final String YOUR_DOMAIN_URL = "https://www.web3mq.com";
+    private static final String REDIRECT_URL = "web3mq_dapp://";
+    private String mainPrivateKeyHex,user_id,pubkey_value,registerSignContent;
+    private long signInTimeStamp;
     public static synchronized RegisterFragment getInstance() {
         if (instance == null) {
             instance = new RegisterFragment();
@@ -71,7 +73,7 @@ public class RegisterFragment extends BaseFragment {
         tv_wallet_address = rootView.findViewById(R.id.tv_wallet_address);
         btn_create_new_user = rootView.findViewById(R.id.btn_create_new_user);
         iv_back = rootView.findViewById(R.id.iv_back);
-        tv_wallet_address.setText(ETH_ADDRESS);
+        tv_wallet_address.setText(wallet_address);
     }
 
     private void setListener() {
@@ -94,7 +96,7 @@ public class RegisterFragment extends BaseFragment {
         btn_create_new_user.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sign_up();
+                signKeyGenerate();
             }
         });
 
@@ -105,44 +107,82 @@ public class RegisterFragment extends BaseFragment {
                 activity.switchContent(StartFragment.getInstance());
             }
         });
-    }
 
-    private void sign_up(){
-        String eth_prv_key = ETH_PRV_KEY.toLowerCase();
-        String eth_address = ETH_ADDRESS.toLowerCase();
-        String wallet_type = "eth";
-        String password = view_create_pwd.getPwd();
-        String magicString = web3MQUser.generateMagicString(wallet_type,eth_address,password);
-        Log.i(TAG,"magicString:"+magicString);
-        //TODO 钱包签名生成私钥
-        String keyGenerateSignature = web3MQUser.keyGenerateSign(eth_prv_key,eth_address,magicString);
-        Log.i(TAG,"keyGenerateSignature:"+keyGenerateSignature);
-        String mainPrivateKeyHex = CryptoUtils.SHA256_ENCODE(keyGenerateSignature);
-        String wallet_type_name = "Ethereum";
-        String your_domain_url = "https://www.web3mq.com";
-        String user_id = web3MQUser.generateUserID(wallet_type, eth_address);
-        Log.i(TAG,"user_id:"+user_id);
-        String pubkey_type = "ed25519";
-        String pubkey_value = Ed25519.generatePublicKey(mainPrivateKeyHex);
-        Log.i(TAG,"pubkey_value:"+pubkey_value + "pubkey_value len:"+pubkey_value.length());
-        long time_stamp = System.currentTimeMillis();
-        Log.i(TAG,"sha3_224 before:"+user_id+pubkey_type + pubkey_value + wallet_type + eth_address + time_stamp);
-        String nonce_content = CryptoUtils.SHA3_ENCODE(user_id+pubkey_type + pubkey_value + wallet_type + eth_address + time_stamp);
-        Log.i(TAG,"sha3_224 nonce_content:"+nonce_content);
-        //TODO 注册接口签名
-        String[] sign = web3MQUser.registerSign(eth_prv_key,wallet_type_name,eth_address,your_domain_url,nonce_content);
-        web3MQUser.signUp(user_id, wallet_type, eth_address, mainPrivateKeyHex, sign[0], sign[1], time_stamp, new SignupCallback() {
+        Web3MQSign.getInstance().setOnSignResponseMessageCallback(new OnSignResponseMessageCallback() {
             @Override
-            public void onSuccess() {
-                loginRequest(user_id,wallet_type,eth_address,mainPrivateKeyHex,pubkey_value);
+            public void onApprove(String signature) {
+                if(!keyGenerateSignSuccess){
+                    //keyGenerate sign
+                    mainPrivateKeyHex = CryptoUtils.SHA256_ENCODE(signature);
+                    user_id = web3MQUser.generateUserID(wallet_type, wallet_address);
+                    Log.i(TAG,"user_id:"+user_id);
+                    String pubkey_type = "ed25519";
+                    pubkey_value = Ed25519.generatePublicKey(mainPrivateKeyHex);
+                    Log.i(TAG,"pubkey_value:"+pubkey_value + "pubkey_value len:"+pubkey_value.length());
+                    signInTimeStamp = System.currentTimeMillis();
+                    Log.i(TAG,"sha3_224 before:"+user_id+pubkey_type + pubkey_value + wallet_type + wallet_address + signInTimeStamp);
+                    String nonce_content = CryptoUtils.SHA3_ENCODE(user_id+pubkey_type + pubkey_value + wallet_type + wallet_address + signInTimeStamp);
+                    Log.i(TAG,"sha3_224 nonce_content:"+nonce_content);
+                    registerSignContent = Web3MQUser.getInstance().getRegisterSignContent(wallet_name,wallet_address,YOUR_DOMAIN_URL,nonce_content);
+                    keyGenerateSignSuccess = true;
+                    sendSign(registerSignContent);
+                }else {
+                    //register sign
+                    if(mainPrivateKeyHex==null || user_id==null || pubkey_value==null || registerSignContent== null || signInTimeStamp==0){
+                        Log.e(TAG,"keyGenerateSign error");
+                        return;
+                    }
+                    web3MQUser.signUp(user_id, wallet_type, wallet_address, mainPrivateKeyHex, registerSignContent, signature, signInTimeStamp, new SignupCallback() {
+                        @Override
+                        public void onSuccess() {
+                            //user sign up success
+                            loginRequest(user_id,wallet_type,wallet_address,mainPrivateKeyHex,pubkey_value);
+                        }
+
+                        @Override
+                        public void onFail(String error) {
+                            hideLoading();
+                            Log.i(TAG,"signUp fail: "+error);
+                        }
+                    });
+                }
             }
 
             @Override
-            public void onFail(String error) {
-                hideLoadingDialog();
-                Log.i(TAG,"signUp fail: "+error);
+            public void onReject() {
+                hideLoading();
+                Toast.makeText(getActivity(),"sign reject",Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public void setWalletInfo(String wallet_name, String wallet_type,String wallet_address){
+        this.wallet_name = wallet_name;
+        this.wallet_type = wallet_type;
+        this.wallet_address = wallet_address;
+        Log.i(TAG,"setWalletInfo wallet_name: "+wallet_name+" wallet_type:"+wallet_type+" wallet_address:"+wallet_address);
+    }
+
+    /**
+     *
+     */
+    private void signKeyGenerate(){
+        String password = view_create_pwd.getPwd();
+        String magicString = web3MQUser.generateMagicString(wallet_type,wallet_address,password);
+        Log.i(TAG,"magicString:"+magicString);
+        String keyGenerateContent = web3MQUser.getKeyGenerateSignContent(wallet_address,magicString);
+        Log.i(TAG,"keyGenerateContent:"+keyGenerateContent);
+        sendSign(keyGenerateContent);
+    }
+
+    private void sendSign(String sign_raw){
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(Web3MQSign.getInstance().generateSignDeepLink()));
+        startActivity(intent);
+        BridgeMessageProposer proposer = new BridgeMessageProposer();
+        proposer.name = "Web3MQ_DAPP_DEMO";
+        proposer.url = "www.web3mq_dapp.com";
+        proposer.redirect = REDIRECT_URL;
+        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,false);
     }
 
     private void loginRequest(String user_id,String wallet_type,String wallet_address,String main_prv_key,String main_pubkey){
@@ -160,21 +200,29 @@ public class RegisterFragment extends BaseFragment {
         });
     }
 
-
     private void connect(){
         Web3MQClient.getInstance().startConnect(new ConnectCallback() {
             @Override
             public void onSuccess() {
                 // connect success
-                hideLoadingDialog();
-                Intent intent = new Intent(getActivity(), HomePageActivity.class);
-                startActivity(intent);
+                sendConnectCommand();
             }
 
             @Override
             public void onFail(String error) {
-                hideLoadingDialog();
+                hideLoading();
                 Toast.makeText(getActivity(),"connect fail", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void sendConnectCommand(){
+        Web3MQClient.getInstance().sendConnectCommand(new OnConnectCommandCallback() {
+            @Override
+            public void onConnectCommandResponse() {
+                hideLoading();
+                Intent intent = new Intent(getActivity(), HomePageActivity.class);
+                startActivity(intent);
             }
         });
     }

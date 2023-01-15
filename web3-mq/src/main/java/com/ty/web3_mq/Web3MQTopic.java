@@ -17,6 +17,8 @@ import com.ty.web3_mq.interfaces.SubscribeCallback;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
+import java.net.URLEncoder;
+
 public class Web3MQTopic {
     private static final String TAG = "Web3MQNotification";
     private volatile static Web3MQTopic topic;
@@ -75,7 +77,7 @@ public class Web3MQTopic {
             request.page = page;
             request.size = size;
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_MY_CREATE_TOPIC_LIST, request,pub_key, did_key, TopicListResponse.class, new HttpManager.Callback<TopicListResponse>() {
                 @Override
                 public void onResponse(TopicListResponse response) {
@@ -107,7 +109,7 @@ public class Web3MQTopic {
             request.page = page;
             request.size = size;
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_MY_SUBSCRIBE_TOPIC_LIST, request,pub_key, did_key, TopicListResponse.class, new HttpManager.Callback<TopicListResponse>() {
                 @Override
                 public void onResponse(TopicListResponse response) {

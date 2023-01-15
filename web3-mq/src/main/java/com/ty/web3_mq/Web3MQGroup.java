@@ -17,6 +17,8 @@ import com.ty.web3_mq.interfaces.InvitationGroupCallback;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
+import java.net.URLEncoder;
+
 public class Web3MQGroup {
     private static final String TAG = "Web3MQGroup";
     private volatile static Web3MQGroup notification;
@@ -107,7 +109,7 @@ public class Web3MQGroup {
             request.size = size;
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             HttpManager.getInstance().get(ApiConfig.GET_GROUP_LIST, request,pub_key,did_key, GroupsResponse.class, new HttpManager.Callback<GroupsResponse>() {
                 @Override
                 public void onResponse(GroupsResponse response) {
@@ -139,7 +141,7 @@ public class Web3MQGroup {
             request.size = size;
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             request.groupid = groupid;
             HttpManager.getInstance().get(ApiConfig.GET_GROUP_MEMBERS, request,pub_key, did_key, GroupMembersResponse.class, new HttpManager.Callback<GroupMembersResponse>() {
                 @Override

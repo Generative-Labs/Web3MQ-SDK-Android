@@ -15,9 +15,13 @@ import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SignatureException;
 
 public class Ed25519 {
     private static final String TAG = "Ed25519";
@@ -77,6 +81,27 @@ public class Ed25519 {
         edEng.update(data);
         byte[] enEdata =  edEng.sign();
         return Base64.encodeToString(enEdata,Base64.NO_WRAP);
+    }
+
+    public static Boolean ed25519VerifySign(String publicKey, String data, String signData) {
+        Boolean isSuccess = null;
+        try {
+            EdDSAEngine edEng  = new EdDSAEngine();
+            EdDSANamedCurveSpec spec = EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519);
+            byte[] publicKeyByte = hexStringToBytes(publicKey);
+            PublicKey pk = new EdDSAPublicKey(new EdDSAPublicKeySpec(publicKeyByte, spec));
+            edEng.initVerify(pk);
+            edEng.setParameter(EdDSAEngine.ONE_SHOT_MODE);
+            edEng.update(data.getBytes());
+            isSuccess = edEng.verify(Base64.decode(signData,Base64.NO_WRAP));
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return isSuccess;
     }
 
     public static String ed25519SeedSign(String privateKeySeed, byte[] data) throws Exception {
