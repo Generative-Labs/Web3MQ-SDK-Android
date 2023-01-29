@@ -25,9 +25,12 @@ import com.ty.web3_mq.websocket.bean.BridgeMessageContent;
 import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
 import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
 
+import org.bouncycastle.crypto.agreement.X25519Agreement;
 import org.bouncycastle.crypto.digests.SHA384Digest;
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
 import org.bouncycastle.crypto.params.HKDFParameters;
+import org.bouncycastle.crypto.params.X25519PrivateKeyParameters;
+import org.bouncycastle.crypto.params.X25519PublicKeyParameters;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 import org.whispersystems.curve25519.Curve25519;
 
@@ -50,13 +53,15 @@ import web3mq.Message;
 public class Web3MQSign {
     private static final String TAG = "Web3MQSign";
     private volatile static Web3MQSign web3MQSign;
-    private KeyPair ed25519KeyPair, x25519KeyPair;
+    private KeyPair ed25519KeyPair;
+//    private KeyPair x25519KeyPair;
     private byte[] ed25519PrvKey = new byte[32];
     private String my_topic_id,target_topic_id;
     private Gson gson;
     private OnSignRequestMessageCallback onSignRequestMessageCallback;
     private OnConnectResponseCallback onConnectResponseCallback;
     private OnSignResponseMessageCallback onSignResponseMessageCallback;
+    private String targetPubKey;
     public static Web3MQSign getInstance() {
         if (null == web3MQSign) {
             synchronized (Web3MQSign.class) {
@@ -80,24 +85,29 @@ public class Web3MQSign {
             return;
         }
         MessageManager.getInstance().setBridgeConnectCallback(callback);
-        this.my_topic_id = dAppID + "@" + CryptoUtils.SHA1_ENCODE(ed25519KeyPair.getPublicKey().getAsBytes());
+        this.my_topic_id = "bridge:"+CryptoUtils.SHA1_ENCODE((dAppID + "@" + Base64.encodeToString(ed25519KeyPair.getPublicKey().getAsBytes(),Base64.NO_WRAP)));
         Web3MQClient.getInstance().sendBridgeConnectCommand(dAppID, my_topic_id);
 
         MessageManager.getInstance().setBridgeMessageCallback(new BridgeMessageCallback() {
             @Override
             public void onBridgeMessage(String comeFrom, BridgeMessage bridgeMessage) {
-                switch (bridgeMessage.content.action){
+
+                targetPubKey = bridgeMessage.publicKey;
+                String json_content = new String(decryptionContent(Ed25519.hexStringToBytes(targetPubKey),ed25519PrvKey,Base64.decode(bridgeMessage.content,Base64.NO_WRAP)));
+                BridgeMessageContent content = gson.fromJson(json_content,BridgeMessageContent.class);
+                Log.i(TAG,"BridgeMessageContent:"+content);
+                switch (content.action){
                     case BridgeMessage.ACTION_SIGN_REQUEST:
                         if(onSignRequestMessageCallback!=null){
-                            onSignRequestMessageCallback.onSignRequestMessage(bridgeMessage.content.proposer, bridgeMessage.content.address, bridgeMessage.content.signRaw);
+                            onSignRequestMessageCallback.onSignRequestMessage(content.proposer, content.address, content.signRaw, content.requestId,content.userInfo);
                         }
                         break;
                     case BridgeMessage.ACTION_CONNECT_RESPONSE:
                         target_topic_id = comeFrom;
                         if(onConnectResponseCallback!=null){
-                            if(bridgeMessage.content.approve){
+                            if(content.approve){
                                 // connect approve
-                                onConnectResponseCallback.onApprove(bridgeMessage.content.walletInfo);
+                                onConnectResponseCallback.onApprove(content.walletInfo);
                             }else{
                                 //connect reject
                                 onConnectResponseCallback.onReject();
@@ -106,8 +116,8 @@ public class Web3MQSign {
                         break;
                     case BridgeMessage.ACTION_SIGN_RESPONSE:
                         if(onSignResponseMessageCallback!=null){
-                            if(bridgeMessage.content.approve){
-                                onSignResponseMessageCallback.onApprove(bridgeMessage.content.signature);
+                            if(content.approve){
+                                onSignResponseMessageCallback.onApprove(content.signature);
                             }else{
                                 onSignResponseMessageCallback.onReject();
                             }
@@ -149,13 +159,27 @@ public class Web3MQSign {
         return deepLink;
     }
 
-    public void sendSignRequest(BridgeMessageProposer proposer, String signRaw, String address, boolean needStore){
+    public void setTargetPubKey(String ed25519Pubkey){
+        this.targetPubKey = ed25519Pubkey;
+        Log.i(TAG,"updateTargetPubKey:"+targetPubKey);
+    }
+
+    public void sendSignRequest(BridgeMessageProposer proposer, String signRaw, String address,String requestId,String userInfo, boolean needStore){
+        if(targetPubKey==null){
+            Log.e(TAG,"targetPubKey is null");
+            return;
+        }
         BridgeMessage message = new BridgeMessage();
-        message.content = new BridgeMessageContent();
-        message.content.action = BridgeMessage.ACTION_SIGN_REQUEST;
-        message.content.proposer = proposer;
-        message.content.signRaw = signRaw;
-        message.content.address = address;
+        BridgeMessageContent content = new BridgeMessageContent();
+        content.action = BridgeMessage.ACTION_SIGN_REQUEST;
+        content.proposer = proposer;
+        content.signRaw = signRaw;
+        content.address = address;
+        content.requestId = requestId;
+        content.userInfo = userInfo;
+        String json_content = gson.toJson(content);
+        message.content = Base64.encodeToString(encryptionContent(Ed25519.hexStringToBytes(targetPubKey),ed25519PrvKey,json_content.getBytes()),Base64.NO_WRAP);
+        message.publicKey = ed25519KeyPair.getPublicKey().getAsHexString();
         sendBridgeMessage(message, needStore);
     }
 
@@ -164,21 +188,35 @@ public class Web3MQSign {
      */
     public void sendConnectResponse(boolean approve, BridgeMessageWalletInfo walletInfo, boolean needStore){
         BridgeMessage message = new BridgeMessage();
-        message.content = new BridgeMessageContent();
-        message.content.action = BridgeMessage.ACTION_CONNECT_RESPONSE;
-        message.content.approve = approve;
-        message.content.walletInfo = walletInfo;
+        BridgeMessageContent content = new BridgeMessageContent();
+        content.action = BridgeMessage.ACTION_CONNECT_RESPONSE;
+        content.approve = approve;
+        content.walletInfo = walletInfo;
+        String json_content = gson.toJson(content);
+        Log.i(TAG,"targetPubKey:"+targetPubKey+"");
+        message.content = Base64.encodeToString(encryptionContent(Ed25519.hexStringToBytes(targetPubKey),ed25519PrvKey,json_content.getBytes()),Base64.NO_WRAP);
+        message.publicKey = ed25519KeyPair.getPublicKey().getAsHexString();
+        Log.i(TAG,"send pubKy:"+message.publicKey);
         sendBridgeMessage(message, needStore);
     }
 
-    public void sendSignResponse(boolean approve, String signature, boolean needStore){
+    public void sendSignResponse(boolean approve, String signature,String requestId,String userInfo, boolean needStore){
+        Log.i(TAG,"sendSignResponse requestId:"+requestId);
+        Log.i(TAG,"sendSignResponse userInfo:"+userInfo);
+        Log.i(TAG,"sendSignResponse approve:"+approve);
+        Log.i(TAG,"sendSignResponse signature:"+signature);
         BridgeMessage message = new BridgeMessage();
-        message.content = new BridgeMessageContent();
-        message.content.action = BridgeMessage.ACTION_SIGN_RESPONSE;
-        message.content.approve = approve;
+        BridgeMessageContent content = new BridgeMessageContent();
+        content.action = BridgeMessage.ACTION_SIGN_RESPONSE;
+        content.approve = approve;
+        content.requestId = requestId;
+        content.userInfo = userInfo;
         if(signature!=null){
-            message.content.signature = signature;
+            content.signature = signature;
         }
+        String json_content = gson.toJson(content);
+        message.content = Base64.encodeToString(encryptionContent(Ed25519.hexStringToBytes(targetPubKey),ed25519PrvKey,json_content.getBytes()),Base64.NO_WRAP);
+        message.publicKey = ed25519KeyPair.getPublicKey().getAsHexString();
         sendBridgeMessage(message, needStore);
     }
 
@@ -213,29 +251,32 @@ public class Web3MQSign {
             String sign = Ed25519.ed25519Sign(Ed25519.bytesToHexString(ed25519PrvKey),signContent.getBytes());
             Message.Web3MQMessage.Builder builder= Message.Web3MQMessage.newBuilder();
             builder.setNodeId(node_id);
-            Log.i(TAG,"node_id:"+node_id);
+            Log.i(TAG,"NodeId:"+node_id);
             builder.setCipherSuite("NONE");
+            Log.i(TAG,"CipherSuite:"+"NONE");
             builder.setPayloadType("application/json");
+            Log.i(TAG,"PayloadType:"+"application/json");
             builder.setFromSign(sign);
-            Log.i(TAG,"sign:"+sign);
+            Log.i(TAG,"FromSign:"+sign);
             builder.setTimestamp(timestamp);
             Log.i(TAG,"timestamp:"+timestamp);
             builder.setMessageId(msg_id);
-            Log.i(TAG,"msg_id:"+msg_id);
+            Log.i(TAG,"MessageId:"+msg_id);
             builder.setVersion(1);
+            Log.i(TAG,"Version:"+1);
             builder.setComeFrom(my_topic_id);
-            Log.i(TAG,"comfrom:"+my_topic_id);
+            Log.i(TAG,"ComeFrom:"+my_topic_id);
             builder.setContentTopic(target_topic_id);
-            Log.i(TAG,"topic_id:"+ target_topic_id);
+            Log.i(TAG,"ContentTopic:"+ target_topic_id);
             builder.setNeedStore(needStore);
-            Log.i(TAG,"needStore:"+needStore);
+            Log.i(TAG,"NeedStore:"+needStore);
             builder.setPayload(ByteString.copyFrom(msg_str.getBytes()));
-            Log.i(TAG,"payload:"+msg_str);
+            Log.i(TAG,"Payload:"+msg_str);
             String base64PubKey = Base64.encodeToString(ed25519KeyPair.getPublicKey().getAsBytes(),Base64.NO_WRAP);
-            Log.i(TAG,"base64PubKey:"+base64PubKey);
             builder.setValidatePubKey(base64PubKey);
-
+            Log.i(TAG,"ValidatePubKey:"+base64PubKey);
             builder.setMessageType("Web3MQ/bridge");
+            Log.i(TAG,"MessageType:"+"Web3MQ/bridge");
             byte[] sendMessageBytes = CommonUtils.appendPrefix(WebsocketConfig.category, WebsocketConfig.PbTypeMessage, builder.build().toByteArray());
             Web3MQClient.getInstance().getSocketClient().send(sendMessageBytes);
         } catch (Exception e) {
@@ -263,7 +304,8 @@ public class Web3MQSign {
             Sign.Lazy sign = ls;
             ed25519KeyPair = sign.cryptoSignKeypair();
             ed25519PrvKey = Arrays.copyOfRange(ed25519KeyPair.getSecretKey().getAsBytes(),0,32);
-            x25519KeyPair = sign.convertKeyPairEd25519ToCurve25519(ed25519KeyPair);
+//            x25519KeyPair = sign.convertKeyPairEd25519ToCurve25519(ed25519KeyPair);
+
         } catch (SodiumException e) {
             e.printStackTrace();
         }
@@ -288,21 +330,46 @@ public class Web3MQSign {
 //        Log.i(TAG,"result:"+result);
     }
 
-    private byte[] encryptionContent(byte[] publicKey, byte[] privateKey, byte[] content){
-        Curve25519 cipher_x25519 = Curve25519.getInstance(Curve25519.BEST);
-        byte[] shareKey = cipher_x25519.calculateAgreement(publicKey,privateKey);
+    /**
+     *
+     * @param content
+     * @return
+     */
+    private byte[] encryptionContent(byte[] ed25519PublicKey, byte[] ed25519PrivateKey, byte[] content){
+        Log.i(TAG,"---------encrypt--------");
+        Log.i(TAG,"ed25519PublicKey: "+Ed25519.bytesToHexString(ed25519PublicKey));
+        Log.i(TAG,"ed25519PrivateKey: "+Ed25519.bytesToHexString(ed25519PrivateKey));
+        Log.i(TAG,"content: "+new String(content));
+        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
+        Sign.Native aNative = lazySodium;
+        byte[] x25519PublicKey = new byte[32];
+        aNative.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey);
+        byte[] x25519PrivateKey = new byte[32];
+        aNative.convertSecretKeyEd25519ToCurve25519(x25519PrivateKey, ed25519PrivateKey);
+        X25519Agreement x25519Agreement = new X25519Agreement();
+        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
+        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
+        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
+        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+
         HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA384Digest());
         hkdf.init(new HKDFParameters(shareKey, "".getBytes(), "".getBytes()));
         byte[] prk = new byte[32];
         hkdf.generateBytes(prk, 0, 32);
+        Log.i(TAG,"SHA384 prk:"+Ed25519.bytesToHexString(prk));
         //AES-GCM
-        byte[] iv = new byte[12];
+        String prk_base64 = Base64.encodeToString(prk,Base64.NO_WRAP);
+        String iv_str = prk_base64.substring(0,16);
+        Log.i(TAG,"iv_str length:"+iv_str.length());
+        byte[] iv = Base64.decode(iv_str,Base64.NO_WRAP);
+        Log.i(TAG,"iv length:"+iv.length);
         SecretKeySpec key = new SecretKeySpec(prk, "AES");
         GCMParameterSpec spec = new GCMParameterSpec(128, iv); // 创建 GCM 参数规范
         try {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding"); // 创建密码器
             cipher.init(Cipher.ENCRYPT_MODE, key, spec); // 初始化密码器
             byte[] ciphertext = cipher.doFinal(content);
+            Log.i(TAG,"final content base64:"+Base64.encodeToString(ciphertext,Base64.NO_WRAP));
             return ciphertext;
         } catch (BadPaddingException e) {
             e.printStackTrace();
@@ -320,21 +387,40 @@ public class Web3MQSign {
         return null;
     }
 
-    private byte[] decryptionContent(byte[] publicKey, byte[] privateKey, byte[] content){
-        Curve25519 cipher_x25519 = Curve25519.getInstance(Curve25519.BEST);
-        byte[] shareKey = cipher_x25519.calculateAgreement(publicKey,privateKey);
+    private byte[] decryptionContent(byte[] ed25519PublicKey, byte[] ed25519PrivateKey, byte[] content){
+        Log.i(TAG,"---------decrypt--------");
+        Log.i(TAG,"ed25519PublicKey: "+Ed25519.bytesToHexString(ed25519PublicKey));
+        Log.i(TAG,"ed25519PrivateKey: "+Ed25519.bytesToHexString(ed25519PrivateKey));
+        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
+        Sign.Native aNative = lazySodium;
+        byte[] x25519PublicKey = new byte[32];
+        aNative.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey);
+        byte[] x25519PrivateKey = new byte[32];
+        aNative.convertSecretKeyEd25519ToCurve25519(x25519PrivateKey, ed25519PrivateKey);
+        X25519Agreement x25519Agreement = new X25519Agreement();
+        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
+        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
+        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
+        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+
         HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA384Digest());
         hkdf.init(new HKDFParameters(shareKey, "".getBytes(), "".getBytes()));
         byte[] prk = new byte[32];
         hkdf.generateBytes(prk, 0, 32);
+        Log.i(TAG,"SHA384 prk:"+Ed25519.bytesToHexString(prk));
         //AES-GCM
-        byte[] iv = new byte[12];
+        String prk_base64 = Base64.encodeToString(prk,Base64.NO_WRAP);
+        String iv_str = prk_base64.substring(0,16);
+        Log.i(TAG,"iv_str length:"+iv_str.length());
+        byte[] iv = Base64.decode(iv_str,Base64.NO_WRAP);
+        Log.i(TAG,"iv length:"+iv.length);
         SecretKeySpec key = new SecretKeySpec(prk, "AES");
         GCMParameterSpec spec = new GCMParameterSpec(128, iv); // 创建 GCM 参数规范
         try {
             Cipher decipher = Cipher.getInstance("AES/GCM/NoPadding"); // 创建密码器
             decipher.init(Cipher.DECRYPT_MODE, key, spec); // 初始化密码器
             byte[] ciphertext = decipher.doFinal(content);
+            Log.i(TAG,"content source:"+new String(ciphertext));
             return ciphertext;
         } catch (BadPaddingException e) {
             e.printStackTrace();
@@ -350,5 +436,57 @@ public class Web3MQSign {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void test(byte[] ed25519PublicKey, byte[] ed25519PrivateKey) {
+        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
+        Sign.Native aNative = lazySodium;
+        byte[] x25519PublicKey = new byte[32];
+        aNative.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey);
+        byte[] x25519PrivateKey = new byte[32];
+        aNative.convertSecretKeyEd25519ToCurve25519(x25519PrivateKey, ed25519PrivateKey);
+        X25519Agreement x25519Agreement = new X25519Agreement();
+        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
+        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
+        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
+//        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
+//        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
+        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+    }
+
+    public void test1(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
+        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
+        byte[] shareKey = new byte[32];
+        lazySodium.cryptoBoxBeforeNm(shareKey, x25519PublicKey, x25519PrivateKey);
+
+//        Sign.Native aNative = lazySodium;
+
+//        Curve25519 cipher_x25519 = Curve25519.getInstance(Curve25519.BEST);
+//        byte[] shareKey = cipher_x25519.calculateAgreement(x25519PublicKey, x25519PrivateKey);
+        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
+        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
+        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+    }
+
+    public void test2(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
+//        byte[] prv_key= new byte[x25519PrivateKey.length+x25519PublicKey.length];
+//        System.arraycopy(x25519PrivateKey, 0, prv_key, 0, x25519PrivateKey.length);
+//        System.arraycopy(x25519PublicKey, 0, prv_key, x25519PrivateKey.length, x25519PublicKey.length);
+
+        Curve25519 cipher_x25519 = Curve25519.getInstance(Curve25519.BEST);
+        byte[] shareKey = cipher_x25519.calculateAgreement(x25519PublicKey, x25519PrivateKey);
+        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
+        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
+        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+    }
+
+    public void test3(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
+        X25519Agreement x25519Agreement = new X25519Agreement();
+        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
+        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
+        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
+        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
+        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
+        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
     }
 }

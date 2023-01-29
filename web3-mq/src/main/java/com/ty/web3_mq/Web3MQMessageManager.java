@@ -11,6 +11,7 @@ import com.ty.web3_mq.http.request.GetMessageHistoryRequest;
 import com.ty.web3_mq.http.response.BaseResponse;
 import com.ty.web3_mq.http.response.GetMessageHistoryResponse;
 import com.ty.web3_mq.interfaces.ChangeMessageStatusRequestCallback;
+import com.ty.web3_mq.interfaces.ChatsMessageCallback;
 import com.ty.web3_mq.interfaces.GetMessageHistoryCallback;
 import com.ty.web3_mq.interfaces.MessageCallback;
 import com.ty.web3_mq.utils.CommonUtils;
@@ -179,5 +180,13 @@ public class Web3MQMessageManager {
 
     public void removeGroupMessageCallback(String group_id){
         MessageManager.getInstance().removeGroupMessageCallback(group_id);
+    }
+
+    public void setChatsMessageCallback(ChatsMessageCallback callback){
+        MessageManager.getInstance().setChatsMessageCallback(callback);
+    }
+
+    public void removeChatsMessageCallback(){
+        MessageManager.getInstance().removeChatsMessageCallback();
     }
 }

@@ -3,13 +3,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+
     <ImageView android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:src="@mipmap/bg_wallet"/>
+        android:background="@mipmap/bg_wallet"/>
     <FrameLayout
         android:id="@+id/fl_content"
         android:layout_width="0dp"
@@ -22,7 +25,15 @@
         android:layout_height="wrap_content"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="80dp"
+        android:layout_marginBottom="40dp"
         android:src="@mipmap/ic_float_view"
         android:id="@+id/iv_float_view"/>
+    <ImageView android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@mipmap/ic_scan"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginRight="14dp"
+        android:layout_marginTop="14dp"
+        android:id="@+id/iv_scan"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

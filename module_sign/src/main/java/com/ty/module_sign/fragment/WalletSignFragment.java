@@ -1,6 +1,7 @@
 package com.ty.module_sign.fragment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -19,7 +20,7 @@ import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.Web3MQSign;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
-import com.ty.web3_mq.utils.AppUtils;
+import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
 import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
 
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public class WalletSignFragment extends BaseFragment {
         super.onBaseCreateView();
     }
 
-    public void init(String dAppID, String topicId, WalletInitCallback callback){
+    public void init(String dAppID, String topicId,String pubKey, WalletInitCallback callback){
         Web3MQClient.getInstance().startConnect(new ConnectCallback() {
             @Override
             public void onSuccess() {
@@ -60,6 +61,7 @@ public class WalletSignFragment extends BaseFragment {
                     }
                 });
                 Web3MQSign.getInstance().setTargetTopicID(topicId);
+                Web3MQSign.getInstance().setTargetPubKey(pubKey);
             }
 
             @Override
@@ -124,7 +126,7 @@ public class WalletSignFragment extends BaseFragment {
         bottomSheetDialog.show();
     }
 
-    public void showSignBottomDialog(String website, String iconUrl, @NotNull String address,@NotNull String sign_content){
+    public void showSignBottomDialog(BridgeMessageProposer proposer, @NotNull String address, @NotNull String sign_content,String requestId, String userInfo){
         if(bottomSheetDialog!=null && bottomSheetDialog.isShowing()){
             bottomSheetDialog.dismiss();
         }
@@ -136,10 +138,10 @@ public class WalletSignFragment extends BaseFragment {
         ImageView iv_website_icon = view.findViewById(R.id.iv_website_icon);
         TextView tv_address = view.findViewById(R.id.tv_address);
         TextView tv_sign_content  =view.findViewById(R.id.tv_sign_content);
-        if(website!=null){
-            tv_website_url.setText(website);
+        if(proposer.url!=null){
+            tv_website_url.setText(proposer.url);
         }
-        if(iconUrl!=null){
+        if(proposer.iconUrl!=null){
             Glide.with(getActivity()).load(address).into(iv_website_icon);
         }
         tv_address.setText(address);
@@ -150,9 +152,10 @@ public class WalletSignFragment extends BaseFragment {
             public void onClick(View view) {
                 if(onSignCallback!=null ){
                     String signature = onSignCallback.sign(sign_content);
-                    Web3MQSign.getInstance().sendSignResponse(true,signature,false);
+                    Log.i(TAG,"signature:"+signature);
+                    Web3MQSign.getInstance().sendSignResponse(true,signature,requestId,userInfo,false);
                     bottomSheetDialog.dismiss();
-                    onSignCallback.signApprove();
+                    onSignCallback.signApprove(proposer.redirect);
                 }
             }
         });
@@ -160,9 +163,9 @@ public class WalletSignFragment extends BaseFragment {
             @Override
             public void onClick(View view) {
                 if(onSignCallback!=null ){
-                    Web3MQSign.getInstance().sendSignResponse(false,null,false);
+                    Web3MQSign.getInstance().sendSignResponse(false,null,requestId,userInfo,false);
                     bottomSheetDialog.dismiss();
-                    onSignCallback.signReject();
+                    onSignCallback.signReject(proposer.redirect);
                 }
             }
         });

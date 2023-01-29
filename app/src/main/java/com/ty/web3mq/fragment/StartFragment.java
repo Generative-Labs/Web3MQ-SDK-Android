@@ -16,8 +16,7 @@ import com.ty.web3mq.activity.LoginActivity;
 public class StartFragment extends BaseFragment{
     private static final String TAG = "StartFragment";
     private static StartFragment instance;
-    private TextView tv_connect_wallet,tv_create_wallet,tv_check_out;
-    private String dAppId = "swapchat:im";
+    private TextView tv_connect_wallet,tv_check_out;
     public static synchronized StartFragment getInstance() {
         if (instance == null) {
             instance = new StartFragment();
@@ -41,7 +40,6 @@ public class StartFragment extends BaseFragment{
 
     private void initView(){
         tv_connect_wallet = rootView.findViewById(R.id.tv_connect_wallet);
-        tv_create_wallet = rootView.findViewById(R.id.tv_create_wallet);
         tv_check_out = rootView.findViewById(R.id.tv_check_out);
     }
 
@@ -52,14 +50,6 @@ public class StartFragment extends BaseFragment{
             public void onClick(View v) {
                 LoginActivity loginActivity = (LoginActivity) getActivity();
                 loginActivity.switchContent(ConnectWalletFragment.getInstance());
-            }
-        });
-
-        tv_create_wallet.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LoginActivity loginActivity = (LoginActivity) getActivity();
-                loginActivity.switchContent(RegisterFragment.getInstance());
             }
         });
     }

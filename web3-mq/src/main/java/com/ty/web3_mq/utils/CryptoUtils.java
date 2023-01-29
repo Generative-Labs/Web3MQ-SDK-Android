@@ -65,6 +65,10 @@ public class CryptoUtils {
         }
     }
 
+    public static String SHA1_ENCODE(String input){
+        return SHA1_ENCODE(input.getBytes());
+    }
+
     public static String SHA1_ENCODE(byte[] input){
         MessageDigest md = null;
         try {

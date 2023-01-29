@@ -2,13 +2,16 @@ plugins {
     id 'com.android.application'
 }
 
-android {
-    compileSdk 32
+script {
+    apply from: 'config.gradle'
+}
 
+android {
+    compileSdk 33
     defaultConfig {
         applicationId "com.ty.web3mq"
         minSdk 23
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "0.1.0"
 
@@ -49,4 +52,5 @@ dependencies {
 
     implementation project(path: ':web3-mq')
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
+    implementation project(path: ':module_login')
 }

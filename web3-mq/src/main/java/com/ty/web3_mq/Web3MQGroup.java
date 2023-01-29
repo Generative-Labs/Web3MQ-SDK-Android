@@ -21,19 +21,19 @@ import java.net.URLEncoder;
 
 public class Web3MQGroup {
     private static final String TAG = "Web3MQGroup";
-    private volatile static Web3MQGroup notification;
+    private volatile static Web3MQGroup web3MQGroup;
     private Web3MQGroup() {
     }
 
     public static Web3MQGroup getInstance() {
-        if (null == notification) {
+        if (null == web3MQGroup) {
             synchronized (Web3MQGroup.class) {
-                if (null == notification) {
-                    notification = new Web3MQGroup();
+                if (null == web3MQGroup) {
+                    web3MQGroup = new Web3MQGroup();
                 }
             }
         }
-        return notification;
+        return web3MQGroup;
     }
 
     public void createGroup(String group_name, CreateGroupCallback callback){

@@ -182,7 +182,7 @@ public class RegisterFragment extends BaseFragment {
         proposer.name = "Web3MQ_DAPP_DEMO";
         proposer.url = "www.web3mq_dapp.com";
         proposer.redirect = REDIRECT_URL;
-        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,false);
+        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,System.currentTimeMillis()+"","",false);
     }
 
     private void loginRequest(String user_id,String wallet_type,String wallet_address,String main_prv_key,String main_pubkey){

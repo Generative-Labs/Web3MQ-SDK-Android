@@ -3,12 +3,22 @@ package com.ty.web3_mq.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.ty.web3_mq.http.beans.MessageBean;
+import com.ty.web3_mq.http.beans.MessagesBean;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+
 
 public class DefaultSPHelper {
 
     private static final String PREFERENCE_NAME = "web3_mq";
     private static volatile DefaultSPHelper instance;
     private SharedPreferences mPreferences;
+    private static Gson gson;
 
     private DefaultSPHelper() {
         mPreferences = AppUtils.getApplicationContext().getSharedPreferences(PREFERENCE_NAME,
@@ -20,6 +30,9 @@ public class DefaultSPHelper {
             synchronized (DefaultSPHelper.class) {
                 if (instance == null) {
                     instance = new DefaultSPHelper();
+                    gson = new GsonBuilder()
+                            .disableHtmlEscaping()
+                            .create();
                 }
             }
         }
@@ -74,6 +87,19 @@ public class DefaultSPHelper {
         return getString(Constant.SP_DID_KEY);
     }
 
+    public void saveMessage(String chatId, MessagesBean message){
+        put(chatId,message);
+    }
+
+
+    public MessagesBean getMessages(String chatId){
+        return (MessagesBean) getObject(chatId,MessagesBean.class);
+    }
+
+    public Object getObject(String key,Class cls){
+        return gson.fromJson(getString(key),cls);
+    }
+
     /**
      * 将String信息存入Preferences
      */
@@ -83,6 +109,8 @@ public class DefaultSPHelper {
         editor.putString(key, value);
         return editor.commit();
     }
+
+
 
     /**
      * 获取SharePreference中的String类型值
@@ -147,6 +175,14 @@ public class DefaultSPHelper {
         // 存入数据
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.putInt(key, value);
+        return editor.commit();
+    }
+
+    public boolean put(String key, Object value) {
+        // 存入数据
+        String json = gson.toJson(value);
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(key,json);
         return editor.commit();
     }
 

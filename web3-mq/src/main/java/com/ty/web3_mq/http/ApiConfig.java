@@ -38,6 +38,10 @@ public interface ApiConfig {
     String GET_MY_SUBSCRIBE_TOPIC_LIST = BASE_URL+"/api/my_subscribe_topic_list/";
     String PUBLISH_TOPIC_MESSAGE = BASE_URL+"/api/publish_topic_message/";
     String SUBSCRIBE_TOPIC_MESSAGE = BASE_URL+"/api/subscribe_topic/";
+    String GET_MY_FOLLOWERS = BASE_URL +"/api/user_followers/";
+    String GET_MY_FOLLOWING = BASE_URL +"/api/user_following/";
+    String GET_FOLLOWERS_AND_FOLLOWING = BASE_URL +"/api/user_follower_contacts/";
+    String POST_FOLLOW = BASE_URL+"/api/following/";
     interface Headers {
         String DATE_TIME = "DateTime";
         String REQUEST_ID = "RequestId";

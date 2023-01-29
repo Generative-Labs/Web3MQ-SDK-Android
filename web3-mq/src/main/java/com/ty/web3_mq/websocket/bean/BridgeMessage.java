@@ -8,5 +8,5 @@ public class BridgeMessage {
     public static final String ACTION_SIGN_RESPONSE = "signResponse";
 
     public String publicKey;
-    public BridgeMessageContent content;
+    public String content;
 }

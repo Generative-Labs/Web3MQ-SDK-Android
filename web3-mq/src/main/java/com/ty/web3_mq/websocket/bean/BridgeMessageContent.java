@@ -8,4 +8,6 @@ public class BridgeMessageContent {
     public String address;
     public String signature;
     public boolean approve;
+    public String requestId;
+    public String userInfo;
 }

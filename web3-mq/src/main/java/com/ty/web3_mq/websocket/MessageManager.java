@@ -11,6 +11,7 @@ import com.ty.web3_mq.http.beans.NotificationBean;
 import com.ty.web3_mq.http.beans.NotificationPayload;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3_mq.interfaces.BridgeMessageCallback;
+import com.ty.web3_mq.interfaces.ChatsMessageCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.MessageCallback;
 import com.ty.web3_mq.interfaces.NotificationMessageCallback;
@@ -33,8 +34,8 @@ public class MessageManager {
     private ConnectCallback connectCallback;
     private BridgeConnectCallback bridgeConnectCallback;
     private BridgeMessageCallback bridgeMessageCallback;
+    private ChatsMessageCallback chatsMessageCallback;
     private HashMap<String, MessageCallback> DMMessageCallbackHashMap = new HashMap<>();
-    private HashMap<String, MessageCallback> topicMessageCallbackHashMap = new HashMap<>();
     private HashMap<String, MessageCallback> groupMessageCallbackHashMap = new HashMap<>();
     private volatile static MessageManager messageManager;
     private static final String TAG = "MessageManager";
@@ -137,13 +138,25 @@ public class MessageManager {
                     Log.i(TAG,"PayloadType:"+message.getPayloadType());
                     Log.i(TAG,"ContentTopic:"+message.getContentTopic());
                     if(MESSAGE_TYPE_BRIDGE.equals(message.getMessageType())){
-                        BridgeMessage bridgeMessage = gson.fromJson(message.getPayload().toStringUtf8(), BridgeMessage.class);
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                bridgeMessageCallback.onBridgeMessage(message.getComeFrom(), bridgeMessage);
-                            }
-                        });
+                        if(bridgeMessageCallback!=null){
+                            BridgeMessage bridgeMessage = gson.fromJson(message.getPayload().toStringUtf8(), BridgeMessage.class);
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    bridgeMessageCallback.onBridgeMessage(message.getComeFrom(), bridgeMessage);
+                                }
+                            });
+                        }
+
+                    }else{
+                        if(chatsMessageCallback!=null){
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    chatsMessageCallback.onMessage(message);
+                                }
+                            });
+                        }
                     }
 
                     for(String come_from: DMMessageCallbackHashMap.keySet()){
@@ -266,11 +279,19 @@ public class MessageManager {
         groupMessageCallbackHashMap.remove(group_id);
     }
 
-    public void addTopicMessageCallback(String topic_id, MessageCallback callback){
-        topicMessageCallbackHashMap.put(topic_id,callback);
+//    public void addTopicMessageCallback(String topic_id, MessageCallback callback){
+//        topicMessageCallbackHashMap.put(topic_id,callback);
+//    }
+//
+//    public void removeTopicMessageCallback(String Topic_id){
+//        topicMessageCallbackHashMap.remove(Topic_id);
+//    }
+
+    public void setChatsMessageCallback(ChatsMessageCallback callback){
+        chatsMessageCallback = callback;
     }
 
-    public void removeTopicMessageCallback(String Topic_id){
-        topicMessageCallbackHashMap.remove(Topic_id);
+    public void removeChatsMessageCallback(){
+        this.chatsMessageCallback = null;
     }
 }

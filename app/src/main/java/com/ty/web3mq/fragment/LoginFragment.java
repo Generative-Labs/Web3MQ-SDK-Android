@@ -130,7 +130,7 @@ public class LoginFragment extends BaseFragment {
         proposer.name = "Web3MQ_DAPP_DEMO";
         proposer.url = "www.web3mq_dapp.com";
         proposer.redirect = "redirect";
-        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,false);
+        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,System.currentTimeMillis()+"","",false);
     }
 
     public void setUserInfo(String userid,String wallet_type,String wallet_address){
