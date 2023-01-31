@@ -11,6 +11,11 @@ public class RandomUtils {
         return bytesToHex(bytes);
     }
 
+    public static boolean randomBoolean(){
+        Random random = new Random();
+        return random.nextBoolean();
+    }
+
     private static String bytesToHex(byte[] bytes){
         StringBuilder hexString = new StringBuilder(bytes.length);
         for(int i=0;i<bytes.length;i++){
@@ -22,4 +27,5 @@ public class RandomUtils {
         }
         return hexString.toString();
     }
+
 }

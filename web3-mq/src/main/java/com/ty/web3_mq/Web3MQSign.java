@@ -62,12 +62,13 @@ public class Web3MQSign {
     private OnConnectResponseCallback onConnectResponseCallback;
     private OnSignResponseMessageCallback onSignResponseMessageCallback;
     private String targetPubKey;
+    private Sign.Native aNative;
+
     public static Web3MQSign getInstance() {
         if (null == web3MQSign) {
             synchronized (Web3MQSign.class) {
                 if (null == web3MQSign) {
                     web3MQSign = new Web3MQSign();
-
                 }
             }
         }
@@ -76,6 +77,8 @@ public class Web3MQSign {
 
     private Web3MQSign(){
         gson = new GsonBuilder().disableHtmlEscaping().create();
+        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
+        aNative = lazySodium;
     }
 
     public void init(String dAppID, BridgeConnectCallback callback){
@@ -127,6 +130,15 @@ public class Web3MQSign {
             }
         });
     }
+
+//    public void close(){
+//        MessageManager.getInstance().removeBridgeConnectCallback();
+//        MessageManager.getInstance().removeBridgeMessageCallback();
+//        targetPubKey = null;
+//        my_topic_id = null;
+//        ed25519KeyPair = null;
+//        ed25519PrvKey = null;
+//    }
 
     public void setTargetTopicID(String topicID){
         target_topic_id = topicID;
@@ -340,8 +352,7 @@ public class Web3MQSign {
         Log.i(TAG,"ed25519PublicKey: "+Ed25519.bytesToHexString(ed25519PublicKey));
         Log.i(TAG,"ed25519PrivateKey: "+Ed25519.bytesToHexString(ed25519PrivateKey));
         Log.i(TAG,"content: "+new String(content));
-        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
-        Sign.Native aNative = lazySodium;
+
         byte[] x25519PublicKey = new byte[32];
         aNative.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey);
         byte[] x25519PrivateKey = new byte[32];
@@ -391,8 +402,6 @@ public class Web3MQSign {
         Log.i(TAG,"---------decrypt--------");
         Log.i(TAG,"ed25519PublicKey: "+Ed25519.bytesToHexString(ed25519PublicKey));
         Log.i(TAG,"ed25519PrivateKey: "+Ed25519.bytesToHexString(ed25519PrivateKey));
-        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
-        Sign.Native aNative = lazySodium;
         byte[] x25519PublicKey = new byte[32];
         aNative.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey);
         byte[] x25519PrivateKey = new byte[32];
@@ -438,55 +447,55 @@ public class Web3MQSign {
         return null;
     }
 
-    public void test(byte[] ed25519PublicKey, byte[] ed25519PrivateKey) {
-        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
-        Sign.Native aNative = lazySodium;
-        byte[] x25519PublicKey = new byte[32];
-        aNative.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey);
-        byte[] x25519PrivateKey = new byte[32];
-        aNative.convertSecretKeyEd25519ToCurve25519(x25519PrivateKey, ed25519PrivateKey);
-        X25519Agreement x25519Agreement = new X25519Agreement();
-        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
-        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
-        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
+//    public void test(byte[] ed25519PublicKey, byte[] ed25519PrivateKey) {
+//        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
+//        Sign.Native aNative = lazySodium;
+//        byte[] x25519PublicKey = new byte[32];
+//        aNative.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey);
+//        byte[] x25519PrivateKey = new byte[32];
+//        aNative.convertSecretKeyEd25519ToCurve25519(x25519PrivateKey, ed25519PrivateKey);
+//        X25519Agreement x25519Agreement = new X25519Agreement();
+//        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
+//        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
+//        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
+////        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
+////        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
+//        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+//    }
+//
+//    public void test1(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
+//        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
+//        byte[] shareKey = new byte[32];
+//        lazySodium.cryptoBoxBeforeNm(shareKey, x25519PublicKey, x25519PrivateKey);
+//
+////        Sign.Native aNative = lazySodium;
+//
+////        Curve25519 cipher_x25519 = Curve25519.getInstance(Curve25519.BEST);
+////        byte[] shareKey = cipher_x25519.calculateAgreement(x25519PublicKey, x25519PrivateKey);
 //        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
 //        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
-        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
-    }
-
-    public void test1(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
-        LazySodiumAndroid lazySodium = new LazySodiumAndroid(new SodiumAndroid());
-        byte[] shareKey = new byte[32];
-        lazySodium.cryptoBoxBeforeNm(shareKey, x25519PublicKey, x25519PrivateKey);
-
-//        Sign.Native aNative = lazySodium;
-
+//        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+//    }
+//
+//    public void test2(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
+////        byte[] prv_key= new byte[x25519PrivateKey.length+x25519PublicKey.length];
+////        System.arraycopy(x25519PrivateKey, 0, prv_key, 0, x25519PrivateKey.length);
+////        System.arraycopy(x25519PublicKey, 0, prv_key, x25519PrivateKey.length, x25519PublicKey.length);
+//
 //        Curve25519 cipher_x25519 = Curve25519.getInstance(Curve25519.BEST);
 //        byte[] shareKey = cipher_x25519.calculateAgreement(x25519PublicKey, x25519PrivateKey);
-        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
-        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
-        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
-    }
-
-    public void test2(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
-//        byte[] prv_key= new byte[x25519PrivateKey.length+x25519PublicKey.length];
-//        System.arraycopy(x25519PrivateKey, 0, prv_key, 0, x25519PrivateKey.length);
-//        System.arraycopy(x25519PublicKey, 0, prv_key, x25519PrivateKey.length, x25519PublicKey.length);
-
-        Curve25519 cipher_x25519 = Curve25519.getInstance(Curve25519.BEST);
-        byte[] shareKey = cipher_x25519.calculateAgreement(x25519PublicKey, x25519PrivateKey);
-        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
-        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
-        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
-    }
-
-    public void test3(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
-        X25519Agreement x25519Agreement = new X25519Agreement();
-        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
-        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
-        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
-        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
-        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
-        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
-    }
+//        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
+//        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
+//        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+//    }
+//
+//    public void test3(byte[] x25519PublicKey, byte[] x25519PrivateKey) {
+//        X25519Agreement x25519Agreement = new X25519Agreement();
+//        byte[] shareKey = new byte[x25519Agreement.getAgreementSize()];
+//        x25519Agreement.init(new X25519PrivateKeyParameters(x25519PrivateKey));
+//        x25519Agreement.calculateAgreement(new X25519PublicKeyParameters(x25519PublicKey),shareKey,0);
+//        Log.i(TAG,"x25519PublicKey:"+Ed25519.bytesToHexString(x25519PublicKey));
+//        Log.i(TAG,"x25519PrivateKey:"+Ed25519.bytesToHexString(x25519PrivateKey));
+//        Log.i(TAG,"shareKey:"+Ed25519.bytesToHexString(shareKey));
+//    }
 }

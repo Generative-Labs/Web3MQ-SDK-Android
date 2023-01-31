@@ -32,6 +32,7 @@ public class Web3MQSocketClient extends WebSocketClient {
 
     public void initConnectionParam(String node_id){
         this.node_id = node_id;
+        this.setConnectionLostTimeout(0);
     }
 
     @Override
@@ -88,7 +89,8 @@ public class Web3MQSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        Log.i(TAG,"WebSocketClient onClose code:"+code+" reason:"+reason+" remote:"+remote);
+        Log.e(TAG,"WebSocketClient onClose code:"+code+" reason:"+reason+" remote:"+remote);
+        reconnect();
     }
 
     @Override

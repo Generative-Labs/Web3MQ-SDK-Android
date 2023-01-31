@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -24,7 +25,6 @@ import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.Web3MQSign;
 import com.ty.web3_mq.interfaces.OnSignRequestMessageCallback;
 import com.ty.web3_mq.utils.CryptoUtils;
-import com.ty.web3_mq.utils.Ed25519;
 import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
 import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
 import com.ty.web3mq.wallet.R;
@@ -46,8 +46,9 @@ public class MainActivity extends AppCompatActivity {
 //    private String ETH_PRV_KEY = "5e82803521388cc0fa8a1013c4fa414dfe489940f97c647dbf066c662a70d54e";
     private String ETH_ADDRESS = "0x3a71d76262729144B0E833AF463Ed459179327aF";
     private String ETH_PRV_KEY = "5e2d12df322724fad44de516bfe3be420d356417b05ca044dbe8ad4b500f9018";
-    private String redirect,topicId,iconUrl,website;
+    private String redirect,topicId,iconUrl,website,ed25519Pubkey;
     private ImageView iv_scan;
+    private boolean handleUri = false;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,8 +72,10 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         Log.i(TAG,"onNewIntent");
-        Uri uri = intent.getData();
-        handleUri(uri);
+//        String action = intent.getData().getQueryParameter("action");
+//        Log.i(TAG,"onNewIntent url action:"+action);
+//        Uri uri = intent.getData();
+//        handleUri(uri);
     }
 
     @Override
@@ -83,8 +86,61 @@ public class MainActivity extends AppCompatActivity {
         handleUri(uri);
     }
 
+    private void initSignFragment(){
+        if (!walletSignFragment.isAdded()){
+            walletSignFragment.init(dAppID, topicId,ed25519Pubkey, new WalletInitCallback() {
+                @Override
+                public void onSuccess() {
+                    BridgeMessageWalletInfo walletInfo = new BridgeMessageWalletInfo();
+                    walletInfo.address = ETH_ADDRESS;
+                    walletInfo.name = "Metamask";
+                    walletInfo.description = "ETH wallet";
+                    walletInfo.walletType = "eth";
+                    //TODO
+//                    walletSignFragment.showConnectBottomDialog(website,iconUrl,walletInfo);
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            handleUri = false;
+                            Log.i(TAG, "change handleUri:"+ false);
+                            Web3MQSign.getInstance().sendConnectResponse(true,walletInfo,false);
+                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
+                            startActivity(intent);
+                        }
+                    },5000);
+
+                }
+
+                @Override
+                public void onFail(String error) {
+                    Toast.makeText(MainActivity.this,error,Toast.LENGTH_SHORT).show();
+                }
+            });
+        }else{
+            BridgeMessageWalletInfo walletInfo = new BridgeMessageWalletInfo();
+            walletInfo.address = ETH_ADDRESS;
+            walletInfo.name = "Metamask";
+            walletInfo.description = "ETH wallet";
+            walletInfo.walletType = "eth";
+            //TODO
+//            walletSignFragment.showConnectBottomDialog(website,iconUrl,walletInfo);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    handleUri = false;
+                    Log.i(TAG, "change handleUri:"+ false);
+                    Web3MQSign.getInstance().sendConnectResponse(true,walletInfo,false);
+                    Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
+                    startActivity(intent);
+                }
+            },5000);
+        }
+    }
+
     private void handleUri(Uri uri){
-        if(uri!=null){
+        Log.i(TAG,"handleUri:"+handleUri);
+        if(uri!=null&& !handleUri){
+            handleUri = true;
             String action = uri.getQueryParameter("action");
             Log.i(TAG,"url action:"+action);
             if(action.equals("connect")){
@@ -92,25 +148,9 @@ public class MainActivity extends AppCompatActivity {
                 iconUrl = uri.getQueryParameter("iconUrl");
                 website = uri.getQueryParameter("website");
                 redirect = uri.getQueryParameter("redirect");
-                String ed25519Pubkey = uri.getQueryParameter("ed25519Pubkey");
+                ed25519Pubkey = uri.getQueryParameter("ed25519Pubkey");
                 Log.i(TAG,"topicId:"+topicId+" iconUrl:"+iconUrl+" website:"+website+" redirect:"+redirect);
 
-                walletSignFragment.init(dAppID, topicId,ed25519Pubkey, new WalletInitCallback() {
-                    @Override
-                    public void onSuccess() {
-                        BridgeMessageWalletInfo walletInfo = new BridgeMessageWalletInfo();
-                        walletInfo.address = ETH_ADDRESS;
-                        walletInfo.name = "Metamask";
-                        walletInfo.description = "ETH wallet";
-                        walletInfo.walletType = "eth";
-                        walletSignFragment.showConnectBottomDialog(website,iconUrl,walletInfo);
-                    }
-
-                    @Override
-                    public void onFail(String error) {
-                        Toast.makeText(MainActivity.this,error,Toast.LENGTH_SHORT).show();
-                    }
-                });
                 walletSignFragment.setOnConnectCallback(new OnConnectCallback() {
 
                     @Override
@@ -136,7 +176,17 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSignRequestMessage(BridgeMessageProposer proposer, String address, String sign_raw,String requestId, String userInfo) {
                         Log.i(TAG,"sign_raw: "+sign_raw);
-                        walletSignFragment.showSignBottomDialog(proposer,address,sign_raw,requestId,userInfo);
+                        //TODO
+//                       walletSignFragment.showSignBottomDialog(proposer,address,sign_raw,requestId,userInfo);
+                       new Handler().postDelayed(new Runnable() {
+                           @Override
+                           public void run() {
+                               String signature = CryptoUtils.signMessage(ETH_PRV_KEY,sign_raw);
+                               Web3MQSign.getInstance().sendSignResponse(true,signature,requestId,userInfo,false);
+                               Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
+                               startActivity(intent);
+                           }
+                       },5000);
                     }
                 });
 
@@ -163,9 +213,11 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+                initSignFragment();
+
             }
-            if (!walletSignFragment.isAdded()) { // 先判断是否被add过
-                transaction.add(R.id.fl_content, walletSignFragment).commitAllowingStateLoss(); // 隐藏当前的fragment，add下一个到Activity中
+            if (!walletSignFragment.isAdded()) {
+                transaction.add(R.id.fl_content, walletSignFragment).commitAllowingStateLoss();
             }
         }
     }
@@ -180,7 +232,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 //scan
                 ScanCodeConfig.create(MainActivity.this)
-                        //设置扫码页样式 ScanStyle.NONE：无  ScanStyle.QQ ：仿QQ样式   ScanStyle.WECHAT ：仿微信样式    ScanStyle.CUSTOMIZE ： 自定义样式
                         .setStyle(ScanStyle.WECHAT)
                         //扫码成功是否播放音效  true ： 播放   false ： 不播放
                         .setPlayAudio(false)
@@ -208,5 +259,4 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 }

@@ -146,6 +146,11 @@ public class Web3MQClient {
                 } else if (socketClient.getReadyState().equals(ReadyState.CLOSING) || socketClient.getReadyState().equals(ReadyState.CLOSED)) {
                     socketClient.reconnect();
                 }
+            }else{
+                Log.e(TAG,"WebSocket is already connected");
+                if(connectCallback!=null){
+                    connectCallback.alreadyConnected();
+                }
             }
         }else{
             if(connectCallback!=null){

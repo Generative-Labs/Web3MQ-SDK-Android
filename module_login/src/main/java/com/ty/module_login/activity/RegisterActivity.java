@@ -200,6 +200,11 @@ public class RegisterActivity extends BaseActivity {
                 hideLoading();
                 Toast.makeText(RegisterActivity.this,"connect fail", Toast.LENGTH_SHORT).show();
             }
+
+            @Override
+            public void alreadyConnected() {
+
+            }
         });
     }
 

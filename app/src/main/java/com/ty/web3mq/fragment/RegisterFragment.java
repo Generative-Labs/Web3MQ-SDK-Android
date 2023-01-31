@@ -213,6 +213,11 @@ public class RegisterFragment extends BaseFragment {
                 hideLoading();
                 Toast.makeText(getActivity(),"connect fail", Toast.LENGTH_SHORT).show();
             }
+
+            @Override
+            public void alreadyConnected() {
+
+            }
         });
     }
 

@@ -1,6 +1,7 @@
 package com.ty.module_sign.fragment;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -31,6 +32,8 @@ public class WalletSignFragment extends BaseFragment {
     private BottomSheetDialog bottomSheetDialog;
     private OnConnectCallback connectCallback;
     private OnSignCallback onSignCallback;
+
+    private boolean auto = true;
 
     public static synchronized WalletSignFragment getInstance() {
         if (instance == null) {
@@ -67,6 +70,11 @@ public class WalletSignFragment extends BaseFragment {
             @Override
             public void onFail(String error) {
                 callback.onFail("connect websocket error:"+error);
+            }
+
+            @Override
+            public void alreadyConnected() {
+                callback.onSuccess();
             }
         });
     }
@@ -124,6 +132,13 @@ public class WalletSignFragment extends BaseFragment {
         bottomSheetDialog.getWindow().findViewById(R.id.design_bottom_sheet)
                 .setBackgroundResource(android.R.color.transparent);
         bottomSheetDialog.show();
+
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                btn_connect.performClick();
+//            }
+//        },3000);
     }
 
     public void showSignBottomDialog(BridgeMessageProposer proposer, @NotNull String address, @NotNull String sign_content,String requestId, String userInfo){
@@ -173,6 +188,13 @@ public class WalletSignFragment extends BaseFragment {
         bottomSheetDialog.getWindow().findViewById(R.id.design_bottom_sheet)
                 .setBackgroundResource(android.R.color.transparent);
         bottomSheetDialog.show();
+
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                btn_sign.performClick();
+//            }
+//        },3000);
     }
 
 }

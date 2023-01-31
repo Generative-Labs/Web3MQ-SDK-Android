@@ -232,6 +232,11 @@ public class Login2Fragment extends BaseFragment {
                 hideLoading();
                 Toast.makeText(getActivity(),"connect fail", Toast.LENGTH_SHORT).show();
             }
+
+            @Override
+            public void alreadyConnected() {
+
+            }
         });
     }
 

@@ -54,6 +54,11 @@ public class ConnectWalletActivity extends BaseActivity {
             public void onFail(String error) {
 
             }
+
+            @Override
+            public void alreadyConnected() {
+
+            }
         });
 
         Web3MQSign.getInstance().setOnConnectResponseCallback(new OnConnectResponseCallback() {

@@ -65,6 +65,11 @@ public class ConnectWalletFragment extends BaseFragment {
             public void onFail(String error) {
 
             }
+
+            @Override
+            public void alreadyConnected() {
+
+            }
         });
 
         Web3MQSign.getInstance().setOnConnectResponseCallback(new OnConnectResponseCallback() {
