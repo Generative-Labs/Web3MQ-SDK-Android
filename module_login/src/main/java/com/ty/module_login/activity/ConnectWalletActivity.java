@@ -7,7 +7,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
@@ -37,27 +36,12 @@ public class ConnectWalletActivity extends BaseActivity {
     }
 
     private void connectWallet(){
-        Web3MQClient.getInstance().startConnect(new ConnectCallback() {
+        Web3MQSign.getInstance().init(AppConfig.DAppID, new BridgeConnectCallback() {
             @Override
-            public void onSuccess() {
-                Web3MQSign.getInstance().init(AppConfig.DAppID, new BridgeConnectCallback() {
-                    @Override
-                    public void onConnectCallback() {
-                        String deepLink = Web3MQSign.getInstance().generateConnectDeepLink(null,"www.web3mq.com","web3mq_dapp_connect://");
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(deepLink));
-                        startActivity(intent);
-                    }
-                });
-            }
-
-            @Override
-            public void onFail(String error) {
-
-            }
-
-            @Override
-            public void alreadyConnected() {
-
+            public void onConnectCallback() {
+                String deepLink = Web3MQSign.getInstance().generateConnectDeepLink(null,AppConfig.WebSite,AppConfig.REDIRECT_WALLET_CONNECT);
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(deepLink));
+                startActivity(intent);
             }
         });
 

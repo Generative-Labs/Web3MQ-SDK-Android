@@ -139,25 +139,28 @@ public class LoginActivity extends BaseActivity {
             @Override
             public void onSuccess() {
                 Log.i(TAG,"login success");
-                sendConnectCommand();
+//                sendConnectCommand();
+                hideLoading();
+                ModuleLogin.getInstance().getOnLoginSuccessCallback().onLoginSuccess();
             }
 
             @Override
             public void onFail(String error) {
                 hideLoading();
                 Log.i(TAG,"login error "+error);
+                cl_pwd_error.setVisibility(View.VISIBLE);
             }
         });
     }
 
-    private void sendConnectCommand(){
-        Web3MQClient.getInstance().sendConnectCommand(new OnConnectCommandCallback() {
-            @Override
-            public void onConnectCommandResponse() {
-                hideLoading();
-                ModuleLogin.getInstance().getOnLoginSuccessCallback().onLoginSuccess();
-                //TODO
-            }
-        });
-    }
+//    private void sendConnectCommand(){
+//        Web3MQClient.getInstance().sendConnectCommand(new OnConnectCommandCallback() {
+//            @Override
+//            public void onConnectCommandResponse() {
+//                hideLoading();
+//
+//                //TODO
+//            }
+//        });
+//    }
 }

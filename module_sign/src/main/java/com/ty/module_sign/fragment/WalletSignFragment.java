@@ -1,5 +1,6 @@
 package com.ty.module_sign.fragment;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -21,6 +22,7 @@ import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.Web3MQSign;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
+import com.ty.web3_mq.utils.AppUtils;
 import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
 import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
 
@@ -89,12 +91,12 @@ public class WalletSignFragment extends BaseFragment {
         this.connectCallback = onConnectCallback;
     }
 
-    public void showConnectBottomDialog(String website, String iconUrl,@NotNull BridgeMessageWalletInfo walletInfo) {
+    public void showConnectBottomDialog(Context context, String website, String iconUrl, @NotNull BridgeMessageWalletInfo walletInfo) {
         if(bottomSheetDialog!=null && bottomSheetDialog.isShowing()){
             bottomSheetDialog.dismiss();
         }
-        bottomSheetDialog = new BottomSheetDialog(getActivity());
-        View view = View.inflate(getActivity(),R.layout.bottom_dialog_connect,null);
+        bottomSheetDialog = new BottomSheetDialog(context);
+        View view = View.inflate(AppUtils.getApplicationContext(),R.layout.bottom_dialog_connect,null);
         Button btn_connect = view.findViewById(R.id.btn_connect);
         Button btn_cancel = view.findViewById(R.id.btn_cancel);
         TextView tv_website_url = view.findViewById(R.id.tv_website_url);
@@ -104,7 +106,7 @@ public class WalletSignFragment extends BaseFragment {
             tv_website_url.setText(website);
         }
         if(iconUrl!=null){
-            Glide.with(getActivity()).load(iconUrl).into(iv_website_icon);
+            Glide.with(context).load(iconUrl).into(iv_website_icon);
         }
         tv_address.setText(walletInfo.address);
 

@@ -15,7 +15,11 @@
             <option value="$PROJECT_DIR$/dappconnecttest" />
             <option value="$PROJECT_DIR$/module_chat" />
             <option value="$PROJECT_DIR$/module_common" />
+            <option value="$PROJECT_DIR$/module_contact" />
             <option value="$PROJECT_DIR$/module_login" />
+            <option value="$PROJECT_DIR$/module_new_message" />
+            <option value="$PROJECT_DIR$/module_notification" />
+            <option value="$PROJECT_DIR$/module_profile" />
             <option value="$PROJECT_DIR$/module_sign" />
             <option value="$PROJECT_DIR$/sample" />
             <option value="$PROJECT_DIR$/walletDemo" />

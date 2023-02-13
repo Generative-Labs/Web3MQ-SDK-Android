@@ -3,8 +3,11 @@ package com.ty.web3_mq;
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
 import com.ty.web3_mq.http.request.ChatRequest;
+import com.ty.web3_mq.http.request.UpdateChatRequest;
+import com.ty.web3_mq.http.response.BaseResponse;
 import com.ty.web3_mq.http.response.ChatResponse;
 import com.ty.web3_mq.interfaces.GetChatsCallback;
+import com.ty.web3_mq.interfaces.UpdateMyChatCallback;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
 
@@ -58,4 +61,36 @@ public class Web3MQChats {
         }
     }
 
+    public void updateMyChat(long timestamp, String chatid, String chat_type, UpdateMyChatCallback callback){
+        try {
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
+            UpdateChatRequest request = new UpdateChatRequest();
+            request.userid = DefaultSPHelper.getInstance().getUserID();
+            request.timestamp = timestamp;
+            request.chatid = chatid;
+            request.chat_type = chat_type;
+            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes());
+            HttpManager.getInstance().post(ApiConfig.UPDATE_MY_CHAT, request, pub_key, did_key, BaseResponse.class, new HttpManager.Callback<BaseResponse>() {
+                @Override
+                public void onResponse(BaseResponse response) {
+                    if(callback!=null){
+                        callback.onSuccess();
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    if(callback!=null){
+                        callback.onFail(error);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
 }

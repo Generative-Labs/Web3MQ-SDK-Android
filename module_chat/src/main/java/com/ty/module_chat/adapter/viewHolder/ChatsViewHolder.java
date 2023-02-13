@@ -30,8 +30,13 @@ public class ChatsViewHolder extends RecyclerView.ViewHolder{
         tv_content.setText(content);
     }
     public void setTv_timestamp(long timestamp){
-        String date = DateUtils.getTimeString(timestamp);
-        tv_timestamp.setText(date);
+        if(timestamp!=0){
+            String date = DateUtils.getTimeString(timestamp);
+            tv_timestamp.setText(date);
+        }else{
+            tv_timestamp.setText("");
+        }
+
     }
     public void setIv_icon(int drawable_id){
         iv_icon.setImageDrawable(AppUtils.getApplicationContext().getDrawable(drawable_id));
@@ -43,6 +48,5 @@ public class ChatsViewHolder extends RecyclerView.ViewHolder{
         }else{
             tv_unread_count.setVisibility(View.GONE);
         }
-
     }
 }

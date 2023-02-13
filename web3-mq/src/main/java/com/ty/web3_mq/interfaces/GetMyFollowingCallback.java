@@ -4,6 +4,6 @@ import com.ty.web3_mq.http.beans.FollowersBean;
 
 
 public interface GetMyFollowingCallback {
-    void onSuccess(FollowersBean followersBeans);
+    void onSuccess(String response);
     void onFail(String error);
 }

@@ -23,6 +23,11 @@ public class DateUtils {
         return sdf.format(new Date(timestamp));
     }
 
+    public static String getTimeStringH(long timestamp){
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        return sdf.format(new Date(timestamp));
+    }
+
     public static String getTimeStringNotification(long timestamp){
         long gapTime = System.currentTimeMillis() - timestamp;
         if(gapTime<60*1000){

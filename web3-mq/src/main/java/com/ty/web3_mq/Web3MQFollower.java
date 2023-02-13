@@ -2,6 +2,7 @@ package com.ty.web3_mq;
 
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
+import com.ty.web3_mq.http.request.AddFriendsRequest;
 import com.ty.web3_mq.http.request.FollowRequest;
 import com.ty.web3_mq.http.request.GetFollowerRequest;
 import com.ty.web3_mq.http.response.BaseResponse;
@@ -9,6 +10,7 @@ import com.ty.web3_mq.http.response.FollowersResponse;
 import com.ty.web3_mq.interfaces.FollowCallback;
 import com.ty.web3_mq.interfaces.GetMyFollowersCallback;
 import com.ty.web3_mq.interfaces.GetMyFollowingCallback;
+import com.ty.web3_mq.interfaces.SendFriendRequestCallback;
 import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
@@ -89,14 +91,10 @@ public class Web3MQFollower {
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.web3mq_user_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
-            HttpManager.getInstance().get(ApiConfig.GET_MY_FOLLOWERS, request,pub_key,did_key, FollowersResponse.class, new HttpManager.Callback<FollowersResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_MY_FOLLOWERS, request,pub_key,did_key, new HttpManager.Callback<String>() {
                 @Override
-                public void onResponse(FollowersResponse response) {
-                    if(response.getCode()==0){
-                        callback.onSuccess(response.getData());
-                    }else{
-                        callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
-                    }
+                public void onResponse(String response) {
+                    callback.onSuccess(response);
                 }
 
                 @Override
@@ -121,14 +119,10 @@ public class Web3MQFollower {
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.web3mq_user_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
-            HttpManager.getInstance().get(ApiConfig.GET_MY_FOLLOWING, request,pub_key,did_key, FollowersResponse.class, new HttpManager.Callback<FollowersResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_MY_FOLLOWING, request,pub_key,did_key,  new HttpManager.Callback<String>() {
                 @Override
-                public void onResponse(FollowersResponse response) {
-                    if(response.getCode()==0){
-                        callback.onSuccess(response.getData());
-                    }else{
-                        callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
-                    }
+                public void onResponse(String response) {
+                    callback.onSuccess(response);
                 }
 
                 @Override
@@ -153,11 +147,39 @@ public class Web3MQFollower {
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
             request.web3mq_user_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
-            HttpManager.getInstance().get(ApiConfig.GET_FOLLOWERS_AND_FOLLOWING, request,pub_key,did_key, FollowersResponse.class, new HttpManager.Callback<FollowersResponse>() {
+            HttpManager.getInstance().get(ApiConfig.GET_FOLLOWERS_AND_FOLLOWING, request,pub_key,did_key, new HttpManager.Callback<String>() {
                 @Override
-                public void onResponse(FollowersResponse response) {
+                public void onResponse(String response) {
+                    callback.onSuccess(response);
+                }
+
+                @Override
+                public void onError(String error) {
+                    callback.onFail("error: "+error);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            callback.onFail("ed25519 sign error");
+        }
+    }
+
+    public void sendFriendRequest(String target_userid, long timeStamp, String content, SendFriendRequestCallback callback){
+        try {
+            String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+            String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+            String did_key = DefaultSPHelper.getInstance().getDidKey();
+            AddFriendsRequest request = new AddFriendsRequest();
+            request.userid = DefaultSPHelper.getInstance().getUserID();
+            request.target_userid = target_userid;
+            request.timestamp = timeStamp;
+            request.content = content;
+            request.web3mq_signature = Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.target_userid+content+timeStamp).getBytes());
+            HttpManager.getInstance().post(ApiConfig.ADD_FRIENDS, request,pub_key,did_key, BaseResponse.class, new HttpManager.Callback<BaseResponse>() {
+                @Override
+                public void onResponse(BaseResponse response) {
                     if(response.getCode()==0){
-                        callback.onSuccess(response.getData());
+                        callback.onSuccess();
                     }else{
                         callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
                     }

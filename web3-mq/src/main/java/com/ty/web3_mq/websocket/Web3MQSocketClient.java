@@ -90,7 +90,7 @@ public class Web3MQSocketClient extends WebSocketClient {
     @Override
     public void onClose(int code, String reason, boolean remote) {
         Log.e(TAG,"WebSocketClient onClose code:"+code+" reason:"+reason+" remote:"+remote);
-        reconnect();
+//        reconnect();
     }
 
     @Override

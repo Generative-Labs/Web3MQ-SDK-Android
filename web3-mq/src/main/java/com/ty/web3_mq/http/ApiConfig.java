@@ -17,12 +17,14 @@ public interface ApiConfig {
     String CHANGE_NOTIFICATION_STATUS = BASE_URL + "/api/notification/status/";
     String USER_LOGIN = BASE_URL + "/api/user_login_v2/";
     String GET_CHAT_LIST = BASE_URL + "/api/chats/";
+    String UPDATE_MY_CHAT = BASE_URL + "/api/chats/";
     String GET_CONTACT_LIST = BASE_URL+ "/api/contacts/";
     String POST_FRIEND_REQUEST = BASE_URL+"/api/contacts/add_friends/";
     String GET_SENT_FRIEND_REQUEST_LIST = BASE_URL+"/api/contacts/add_friends_list/";
     String HANDLE_FRIEND_REQUEST = BASE_URL + "/api/contacts/friend_requests/";
     String GET_RECEIVE_FRIEND_REQUEST_LIST = BASE_URL+"/api/contacts/friend_requests_list/";
     String GET_MY_PROFILE = BASE_URL+"/api/my_profile/";
+    String GET_USER_PUBLIC_PROFILE = BASE_URL+"/api/get_user_public_profile/";
     String POST_MY_PROFILE = BASE_URL+"/api/my_profile/";
     String GET_USER_INFO = BASE_URL+"/api/get_user_info/";
     String SEARCH_USERS = BASE_URL+"/api/users/search/";
@@ -40,8 +42,12 @@ public interface ApiConfig {
     String SUBSCRIBE_TOPIC_MESSAGE = BASE_URL+"/api/subscribe_topic/";
     String GET_MY_FOLLOWERS = BASE_URL +"/api/user_followers/";
     String GET_MY_FOLLOWING = BASE_URL +"/api/user_following/";
-    String GET_FOLLOWERS_AND_FOLLOWING = BASE_URL +"/api/user_follower_contacts/";
+    String GET_FOLLOWERS_AND_FOLLOWING = BASE_URL +"/api/user_follow_contacts/";
     String POST_FOLLOW = BASE_URL+"/api/following/";
+    String ADD_FRIENDS = BASE_URL+"/api/contacts/add_friends/";
+    String GET_USER_PERMISSIONS = BASE_URL+"/api/get_target_user_permissions/";
+
+
     interface Headers {
         String DATE_TIME = "DateTime";
         String REQUEST_ID = "RequestId";
@@ -50,5 +56,6 @@ public interface ApiConfig {
         String DID_KEY = "didkey";
         String AUTHORIZATION = "Authorization";
         String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+        String API_VERSION = "api-version";
     }
 }

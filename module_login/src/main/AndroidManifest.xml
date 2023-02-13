@@ -2,13 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <activity android:name="com.ty.module_login.activity.StartActivity"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:exported="true"/>
         <activity android:name="com.ty.module_login.activity.ConnectWalletActivity"
             android:launchMode="singleTop"
             android:exported="true">
             <intent-filter>
-                <data android:scheme="web3mq_dapp_connect"/>
+                <data android:scheme="web3mq_dapp_wallet_connect"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.BROWSABLE"/>

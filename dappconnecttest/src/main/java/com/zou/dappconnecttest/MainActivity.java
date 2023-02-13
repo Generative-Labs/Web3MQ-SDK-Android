@@ -26,7 +26,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String APIKey = "rkkJARiziBQCscgg";
     private static final String DAppID = "web3MQ_dapp_test:dapp";
     private String ETH_ADDRESS = "0x3a71d76262729144B0E833AF463Ed459179327aF";
-    private String ETH_PRV_KEY = "5e2d12df322724fad44de516bfe3be420d356417b05ca044dbe8ad4b500f9018";
     private Web3MQSign web3MQSignDApp = Web3MQSign.getInstance();
     private int signSendCount = 0;
     private int signReceiveCount = 0;
@@ -45,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
                 web3MQSignDApp.init(DAppID, new BridgeConnectCallback() {
                     @Override
                     public void onConnectCallback() {
+                        btn_start.setEnabled(true);
                         Log.i(TAG,"web3MQ Sign DApp init success");
                     }
                 });
@@ -84,8 +84,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG,"walletInfo name: "+walletInfo.name);
                 Log.i(TAG,"walletInfo description: "+walletInfo.description);
                 Log.i(TAG,"-----Receive Connect End----");
-//                sendSign();
-                connect();
+                sendSign();
+//                connect();
             }
 
             @Override

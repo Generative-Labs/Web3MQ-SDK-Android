@@ -141,8 +141,9 @@ public class Web3MQGroup {
             request.size = size;
             request.userid = DefaultSPHelper.getInstance().getUserID();
             request.timestamp = System.currentTimeMillis();
-            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.timestamp).getBytes()));
             request.groupid = groupid;
+            request.web3mq_signature = URLEncoder.encode(Ed25519.ed25519Sign(prv_key_seed,(request.userid+request.groupid+request.timestamp).getBytes()));
+
             HttpManager.getInstance().get(ApiConfig.GET_GROUP_MEMBERS, request,pub_key, did_key, GroupMembersResponse.class, new HttpManager.Callback<GroupMembersResponse>() {
                 @Override
                 public void onResponse(GroupMembersResponse response) {

@@ -37,6 +37,10 @@ dependencies {
     implementation 'com.google.android.material:material:1.7.0'
     implementation project(path: ':module_login')
     implementation project(path: ':module_chat')
+    implementation project(path: ':module_contact')
+    implementation project(path: ':module_new_message')
+    implementation project(path: ':module_notification')
+    implementation project(path: ':module_profile')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

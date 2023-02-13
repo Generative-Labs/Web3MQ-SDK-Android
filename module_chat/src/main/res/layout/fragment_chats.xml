@@ -21,8 +21,9 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_title_chats"
         android:layout_marginRight="16dp"
         android:src="@mipmap/ic_add"
+        android:id="@+id/iv_new_message"
         />
-    <androidx.recyclerview.widget.RecyclerView
+    <com.ty.common.view.Web3MQListView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="10dp"
@@ -30,35 +31,6 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_title_chats"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:id="@+id/recycler_view_chats" />
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/tv_title_chats"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:id="@+id/cl_chats_empty"
-        android:visibility="gone">
-        <ImageView android:layout_width="40dp"
-            android:layout_height="38dp"
-            android:src="@mipmap/ic_chats_empty"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            android:id="@+id/iv_chats_empty"
-            />
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@+id/iv_chats_empty"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            android:layout_marginTop="10dp"
-            android:textColor="#A1A1AA"
-            android:textSize="16dp"
-            android:text="Your message list is empty"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        android:id="@+id/recycler_view_chats"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

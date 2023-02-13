@@ -192,7 +192,8 @@ public class RegisterActivity extends BaseActivity {
             @Override
             public void onSuccess() {
                 // connect success
-                sendConnectCommand();
+//                sendConnectCommand();
+                ModuleLogin.getInstance().getOnLoginSuccessCallback().onLoginSuccess();
             }
 
             @Override
@@ -208,17 +209,17 @@ public class RegisterActivity extends BaseActivity {
         });
     }
 
-    private void sendConnectCommand(){
-        Web3MQClient.getInstance().sendConnectCommand(new OnConnectCommandCallback() {
-            @Override
-            public void onConnectCommandResponse() {
-                hideLoading();
-                ModuleLogin.getInstance().getOnLoginSuccessCallback().onLoginSuccess();
-//                Intent intent = new Intent(RegisterActivity.this, HomePageActivity.class);
-//                startActivity(intent);
-            }
-        });
-    }
+//    private void sendConnectCommand(){
+//        Web3MQClient.getInstance().sendConnectCommand(new OnConnectCommandCallback() {
+//            @Override
+//            public void onConnectCommandResponse() {
+//                hideLoading();
+//                ModuleLogin.getInstance().getOnLoginSuccessCallback().onLoginSuccess();
+////                Intent intent = new Intent(RegisterActivity.this, HomePageActivity.class);
+////                startActivity(intent);
+//            }
+//        });
+//    }
 
 
 }

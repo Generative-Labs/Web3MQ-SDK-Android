@@ -1,10 +1,12 @@
 package com.ty.web3_mq;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
 import com.ty.web3_mq.http.request.GetMyProfileRequest;
+import com.ty.web3_mq.http.request.GetPublicProfileRequest;
 import com.ty.web3_mq.http.request.GetUserInfoRequest;
 import com.ty.web3_mq.http.request.PostMyProfileRequest;
 import com.ty.web3_mq.http.request.SearchUsersRequest;
@@ -16,6 +18,7 @@ import com.ty.web3_mq.http.response.ProfileResponse;
 import com.ty.web3_mq.http.response.SearchUsersResponse;
 import com.ty.web3_mq.http.response.UserInfoResponse;
 import com.ty.web3_mq.interfaces.GetMyProfileCallback;
+import com.ty.web3_mq.interfaces.GetPublicProfileCallback;
 import com.ty.web3_mq.interfaces.GetUserinfoCallback;
 import com.ty.web3_mq.interfaces.LoginCallback;
 import com.ty.web3_mq.interfaces.PostMyProfileCallback;
@@ -35,7 +38,7 @@ import java.net.URLEncoder;
 import java.security.MessageDigest;
 
 public class Web3MQUser {
-    private static final String TAG = "User";
+    private static final String TAG = "Web3MQUser";
     private String salt = "";
     private volatile static Web3MQUser web3MQUser;
     private long expiredTime = 24*60*60*1000;
@@ -267,7 +270,7 @@ public class Web3MQUser {
 
     public boolean isLocalAccountExist(){
         String mainPrivate = DefaultSPHelper.getInstance().getTempPrivate();
-        return mainPrivate!=null;
+        return !TextUtils.isEmpty(mainPrivate);
     }
 
     public void getMyProfile(GetMyProfileCallback callback){
@@ -298,6 +301,33 @@ public class Web3MQUser {
             e.printStackTrace();
             callback.onFail("ed25519 sign error");
         }
+    }
+
+    public void getPublicProfile(String target_userid,GetPublicProfileCallback callback){
+        String pub_key = DefaultSPHelper.getInstance().getTempPublic();
+        String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
+        String did_key = DefaultSPHelper.getInstance().getDidKey();
+        GetPublicProfileRequest request = new GetPublicProfileRequest();
+        request.my_userid = DefaultSPHelper.getInstance().getUserID();
+        request.timestamp = System.currentTimeMillis();
+        request.did_type = "web3mq";
+        request.did_value = target_userid;
+        HttpManager.getInstance().get(ApiConfig.GET_USER_PUBLIC_PROFILE, request,pub_key,did_key,ProfileResponse.class, new HttpManager.Callback<ProfileResponse>() {
+            @Override
+            public void onResponse(ProfileResponse response) {
+                if(response.getCode()==0){
+                    callback.onSuccess(response.getData());
+                }else{
+                    callback.onFail("error code: "+response.getCode()+" msg:"+ response.getMsg());
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onFail("error: "+error);
+            }
+        });
+
     }
 
     public void postMyProfile(String nickname, String avatar_url, PostMyProfileCallback callback){

@@ -6,4 +6,5 @@ public class ProfileBean {
     public String wallet_type;
     public String nickname;
     public String avatar_url;
+    public StatsBean stats;
 }

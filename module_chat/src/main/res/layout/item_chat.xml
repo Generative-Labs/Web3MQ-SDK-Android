@@ -12,7 +12,7 @@
         android:layout_marginLeft="30dp"
         android:id="@+id/iv_icon"/>
 
-    <TextView android:layout_width="250dp"
+    <TextView android:layout_width="150dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toRightOf="@id/iv_icon"
@@ -24,6 +24,7 @@
         android:singleLine="true"
         android:lines="1"
         android:text="title"
+        android:ellipsize="middle"
         android:textStyle="bold"/>
 
     <TextView android:layout_width="250dp"

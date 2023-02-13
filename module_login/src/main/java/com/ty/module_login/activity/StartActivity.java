@@ -6,15 +6,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.ty.common.activity.BaseActivity;
 import com.ty.common.config.RouterPath;
+import com.ty.module_login.ModuleLogin;
 import com.ty.module_login.R;
 import com.ty.module_login.config.UIConfigStart;
+import com.ty.web3_mq.Web3MQClient;
+import com.ty.web3_mq.Web3MQUser;
+import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
 
 @Route(path = RouterPath.LOGIN_START)
 public class StartActivity extends BaseActivity {
@@ -27,16 +30,22 @@ public class StartActivity extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContent(R.layout.activity_start);
-        initView();
-        setListener();
+        if(Web3MQUser.getInstance().isLocalAccountExist()){
+            ModuleLogin.getInstance().getOnLoginSuccessCallback().onLoginSuccess();
+        }else {
+            initView();
+            setListener();
+        }
     }
+
+
 
     private void initView(){
         tv_connect_wallet = findViewById(R.id.tv_connect_wallet);
         tv_check_out = findViewById(R.id.tv_check_out);
         iv_logo = findViewById(R.id.iv_logo);
         if(uiConfig.logoResID!=0){
-            iv_logo.setImageDrawable(getDrawable(uiConfig.logoResID));
+            iv_logo.setImageResource(uiConfig.logoResID);
         }
     }
 

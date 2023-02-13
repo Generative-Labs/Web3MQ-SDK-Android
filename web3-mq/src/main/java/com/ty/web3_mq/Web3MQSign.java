@@ -82,11 +82,11 @@ public class Web3MQSign {
     }
 
     public void init(String dAppID, BridgeConnectCallback callback){
-        generate25519KeyPair();
         if(Web3MQClient.getInstance().getNodeId()==null || !Web3MQClient.getInstance().getSocketClient().isOpen()){
             Log.e(TAG,"websocket not connect");
             return;
         }
+        generate25519KeyPair();
         MessageManager.getInstance().setBridgeConnectCallback(callback);
         this.my_topic_id = "bridge:"+CryptoUtils.SHA1_ENCODE((dAppID + "@" + Base64.encodeToString(ed25519KeyPair.getPublicKey().getAsBytes(),Base64.NO_WRAP)));
         Web3MQClient.getInstance().sendBridgeConnectCommand(dAppID, my_topic_id);
@@ -129,6 +129,10 @@ public class Web3MQSign {
                 }
             }
         });
+    }
+
+    public boolean initialized(){
+        return my_topic_id!=null && ed25519KeyPair!=null && ed25519PrvKey!=null;
     }
 
 //    public void close(){

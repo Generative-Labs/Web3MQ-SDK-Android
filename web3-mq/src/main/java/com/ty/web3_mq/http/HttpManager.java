@@ -10,6 +10,7 @@ import com.androidnetworking.error.ANError;
 import com.androidnetworking.gsonparserfactory.GsonParserFactory;
 import com.androidnetworking.interceptors.HttpLoggingInterceptor;
 import com.androidnetworking.interfaces.ParsedRequestListener;
+import com.androidnetworking.interfaces.StringRequestListener;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -130,6 +131,47 @@ public class HttpManager {
             @Override
             public void onError(ANError anError) {
                 if (null != callback) {
+                    callback.onError(anError.getErrorBody());
+                }
+            }
+        });
+    }
+
+    public void get(final String url,final BaseRequest request,String pub_key, String didKey,
+                    final Callback callback) {
+        StringBuilder final_url = new StringBuilder(url);
+
+        if(request!=null){
+            Type empMapType = new TypeToken<Map<String, String>>() {}.getType();
+            Map<String, String> map = mGson.fromJson(mGson.toJson(request), empMapType);
+            final_url.append("?");
+            for(String key: map.keySet()){
+                final_url.append(key).append("=").append(map.get(key)).append("&");
+            }
+            if (final_url.length() > 0) {
+                final_url.deleteCharAt(final_url.length() - 1);
+            }
+        }
+        Log.i(TAG,"final_url:"+final_url);
+        ANRequest.GetRequestBuilder builder = AndroidNetworking.get(final_url.toString());
+        if(!TextUtils.isEmpty(pub_key)){
+            builder.addHeaders(ApiConfig.Headers.PUB_KEY,pub_key);
+        }
+        if(!TextUtils.isEmpty(didKey)){
+            builder.addHeaders(ApiConfig.Headers.DID_KEY,didKey);
+        }
+
+        builder.build().getAsString(new StringRequestListener() {
+            @Override
+            public void onResponse(String response) {
+                if(callback!=null){
+                    callback.onResponse(response);
+                }
+            }
+
+            @Override
+            public void onError(ANError anError) {
+                if(callback!=null){
                     callback.onError(anError.getErrorBody());
                 }
             }
