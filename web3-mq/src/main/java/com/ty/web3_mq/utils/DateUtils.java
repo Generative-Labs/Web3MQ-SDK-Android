@@ -1,10 +1,39 @@
 package com.ty.web3_mq.utils;
 
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.UUID;
 
 public class DateUtils {
+    public static String getISOOffsetTime(long timeStamp){
+        // 转换为OffsetDateTime对象
+        Instant instant = Instant.ofEpochSecond(timeStamp);
+        OffsetDateTime offsetDateTime = instant.atOffset(ZoneOffset.UTC);
+
+        // 转换为指定格式的字符串
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        return offsetDateTime.format(formatter);
+    }
+
+    public static long getTimeStampFromISOOffsetTime(String IOSOffset){
+        // 解析为OffsetDateTime对象
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        OffsetDateTime offsetDateTime = OffsetDateTime.parse(IOSOffset, formatter);
+
+        // 转换为时间戳（包含毫秒）
+        Instant instant = offsetDateTime.toInstant();
+        return instant.toEpochMilli();
+    }
+
+
     public static String getUUID() {
         return UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }

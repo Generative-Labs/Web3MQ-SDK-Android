@@ -82,6 +82,7 @@ public class Web3MQUser {
                 "Issued At: " + str_date;
     }
 
+    @Deprecated
     public String[] registerSign(String wallet_prv_key,String wallet_type_name, String wallet_address, String your_domain_url, String nonce_content){
         String str_date = CommonUtils.getDate();
         String signature_content = "Web3MQ wants you to sign in with your "+wallet_type_name+" account: \n" +
@@ -268,7 +269,7 @@ public class Web3MQUser {
         this.expiredTime = expiredTime;
     }
 
-    public boolean isLocalAccountExist(){
+    public boolean hasLogged(){
         String mainPrivate = DefaultSPHelper.getInstance().getTempPrivate();
         return !TextUtils.isEmpty(mainPrivate);
     }

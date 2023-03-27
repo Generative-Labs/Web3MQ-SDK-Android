@@ -1,15 +1,11 @@
 package com.ty.web3mq.fragment;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.ty.web3_mq.Web3MQSign;
-import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3mq.R;
 import com.ty.web3mq.activity.LoginActivity;
 

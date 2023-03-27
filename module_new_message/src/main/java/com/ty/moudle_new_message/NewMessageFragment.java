@@ -64,7 +64,9 @@ public class NewMessageFragment extends BottomSheetDialogFragment {
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
-        userid = getArguments().getString(Constants.ROUTER_KEY_USER_ID);
+        if(getArguments()!=null){
+            userid = getArguments().getString(Constants.ROUTER_KEY_USER_ID);
+        }
         View view;
         if(userid==null){
             requestData();
@@ -245,7 +247,7 @@ public class NewMessageFragment extends BottomSheetDialogFragment {
 
     private void inviteMember(String group_id, ArrayList<String> userIds){
         String[] ids = new String[]{};
-        Web3MQGroup.getInstance().invitation(group_id, userIds.toArray(ids), new InvitationGroupCallback() {
+        Web3MQGroup.getInstance().invite(group_id, userIds.toArray(ids), new InvitationGroupCallback() {
             @Override
             public void onSuccess(GroupBean invitationGroupBean) {
                 dismiss();

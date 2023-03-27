@@ -25,6 +25,5 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
         moduleLogin.launch();
-
     }
 }

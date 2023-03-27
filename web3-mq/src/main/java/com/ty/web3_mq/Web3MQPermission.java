@@ -13,7 +13,6 @@ import java.net.URLEncoder;
 public class Web3MQPermission {
     private static final String TAG = "Web3MQSign";
 
-
     private volatile static Web3MQPermission instance;
     public static Web3MQPermission getInstance() {
         if (null == instance) {

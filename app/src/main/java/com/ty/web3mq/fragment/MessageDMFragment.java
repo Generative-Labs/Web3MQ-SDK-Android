@@ -169,7 +169,7 @@ public class MessageDMFragment extends BaseFragment{
     }
 
     private void inviteMember(String user_id){
-        Web3MQGroup.getInstance().invitation(chatid, new String[]{user_id}, new InvitationGroupCallback() {
+        Web3MQGroup.getInstance().invite(chatid, new String[]{user_id}, new InvitationGroupCallback() {
             @Override
             public void onSuccess(GroupBean invitationGroupBean) {
                 Toast.makeText(getActivity(),"invite success",Toast.LENGTH_SHORT).show();

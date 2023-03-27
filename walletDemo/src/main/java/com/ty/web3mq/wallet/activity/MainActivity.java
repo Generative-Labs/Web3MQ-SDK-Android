@@ -9,8 +9,11 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,16 +25,27 @@ import com.ty.module_sign.interfaces.OnConnectCallback;
 import com.ty.module_sign.interfaces.OnSignCallback;
 import com.ty.module_sign.interfaces.WalletInitCallback;
 import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.interfaces.BridgeConnectCallback;
+import com.ty.web3_mq.interfaces.ConnectCallback;
+import com.ty.web3_mq.interfaces.OnWebsocketClosedCallback;
+import com.ty.web3_mq.utils.ConvertUtil;
+import com.ty.web3_mq.utils.DefaultSPHelper;
+import com.ty.web3_mq.websocket.WebsocketConfig;
+import com.ty.web3_mq.websocket.bean.ConnectRequest;
+import com.ty.web3_mq.websocket.bean.SignRequest;
+import com.ty.web3_mq.websocket.bean.sign.Participant;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSession;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.interfaces.OnSignRequestMessageCallback;
 import com.ty.web3_mq.utils.CryptoUtils;
 import com.ty.web3_mq.utils.RandomUtils;
-import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
-import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
+import com.ty.web3_mq.websocket.bean.BridgeMessageMetadata;
 import com.ty.web3mq.wallet.R;
 import com.yxing.ScanCodeActivity;
 import com.yxing.ScanCodeConfig;
 import com.yxing.def.ScanStyle;
+
+import java.net.URLDecoder;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -39,20 +53,12 @@ public class MainActivity extends AppCompatActivity {
     private WalletSignFragment walletSignFragment;
     private String api_key = "rkkJARiziBQCscgg";
     private String dAppID = "web3MQ_test_wallet:wallet";
-    private String ETH_ADDRESS = "0x54277Ee3b362C2E0eeb8D9D3aEe48840C3fD3cBd";
-    private String ETH_PRV_KEY = "b438f33473ec9274c91cfb7900f35c3d86f415f3bca2c54f99d4560802b1489a";
-//    private String ETH_ADDRESS = "0x9b6a5A1dD55Ea481f76B782862e7df2977dFfE6C";
-//    private String ETH_PRV_KEY = "132f28f780af6516ecb1d31bc836293b5a46a0cc2cbb812579dcd1334cca7c7b";
-
-//    private String ETH_ADDRESS = "0xa9731372887B49Ee93a063547975809aFBdD47A8";
-//    private String ETH_PRV_KEY = "5e82803521388cc0fa8a1013c4fa414dfe489940f97c647dbf066c662a70d54e";
-
-//    private String ETH_ADDRESS = "0xa9731372887B49Ee93a063547975809aFBdD47A8";
-//    private String ETH_PRV_KEY = "5e82803521388cc0fa8a1013c4fa414dfe489940f97c647dbf066c662a70d54e";
-
-    private String redirect,topicId,iconUrl,website,ed25519Pubkey;
+    private String ETH_ADDRESS = "0x99D3a969db5185C7980b5D77c9Bb47d88d16a1Fe";
+    private String ETH_PRV_KEY = "70bd271d0cc2e41da5d74db3523155ab1a3d7b960a600320aa8a589b513011a5";
     private ImageView iv_scan;
-    private String handling_connect_uri = null;
+//    private String handling_connect_uri = null;
+    private ToggleButton btn_toggle;
+    private boolean fromRemote = false;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,11 +69,75 @@ public class MainActivity extends AppCompatActivity {
 
         Web3MQClient.getInstance().init(this,api_key);
         setContentView(R.layout.activity_main);
-
+        btn_toggle = findViewById(R.id.btn_toggle);
         walletSignFragment = WalletSignFragment.getInstance();
         initView();
         setListener();
+        Web3MQClient.getInstance().setOnWebsocketClosedCallback(new OnWebsocketClosedCallback() {
+            @Override
+            public void onClose() {
+                //TODO showReconnectDialog
+//                Web3MQClient.getInstance().reconnect();
+//                Web3MQSign.getInstance().reconnect();
+            }
+        });
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.add(R.id.fl_content, walletSignFragment).commitAllowingStateLoss();
+        DefaultSPHelper.getInstance().clear();
+        btn_toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    Web3MQClient.getInstance().switchUri(WebsocketConfig.WS_URL_TEST_NET);
+                }else{
+                    Web3MQClient.getInstance().switchUri(WebsocketConfig.WS_URL_DEV);
+                }
+            }
+        });
 
+//        if(getIntent().getData()==null){
+//            checkPendingRequest();
+//        }
+
+//        DefaultSPHelper.getInstance().showSessionInfo();
+
+
+
+    }
+
+    private boolean checkPendingRequest(){
+        Web3MQSession lastSession = Web3MQSign.getInstance().getLastSession();
+        if(lastSession!=null){
+            SignRequest signRequest = Web3MQSign.getInstance().checkPendingRequest(lastSession);
+            if(signRequest!=null){
+                Web3MQClient.getInstance().startConnect(new ConnectCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Web3MQSign.getInstance().switchSession(dAppID,lastSession);
+                        walletSignFragment.showSignBottomDialog(signRequest.id,
+                                Web3MQSign.getInstance().getCurrentSession().peerParticipant,
+                                signRequest.getAddress(), signRequest.getSignRaw());
+
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+                        Toast.makeText(MainActivity.this,"error",Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void alreadyConnected() {
+                        Web3MQSign.getInstance().switchSession(dAppID,lastSession);
+                        walletSignFragment.showSignBottomDialog(signRequest.id,
+                                Web3MQSign.getInstance().getCurrentSession().peerParticipant,
+                                signRequest.getAddress(), signRequest.getSignRaw());
+                    }
+                });
+
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -76,10 +146,6 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         Log.i(TAG,"onNewIntent");
-//        String action = intent.getData().getQueryParameter("action");
-//        Log.i(TAG,"onNewIntent url action:"+action);
-//        Uri uri = intent.getData();
-//        handleUri(uri);
     }
 
     @Override
@@ -87,96 +153,77 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.i(TAG,"onResume");
         Uri uri = getIntent().getData();
-        handleConnectUri(uri);
+        if(uri != null){
+            fromRemote = false;
+            handleConnectUri(uri);
+        }
     }
 
-    private void initSignFragment(){
-        if (walletSignFragment.isAdded()){
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.remove(walletSignFragment).commitAllowingStateLoss();
-        }
-        walletSignFragment.init(dAppID, topicId,ed25519Pubkey, new WalletInitCallback() {
+    private void initSignFragment(ConnectRequest request){
+        walletSignFragment.showLoadingDialog();
+        walletSignFragment.init(dAppID, request.topic,request.publicKey, new WalletInitCallback() {
             @Override
-            public void onSuccess() {
-                BridgeMessageWalletInfo walletInfo = new BridgeMessageWalletInfo();
-                walletInfo.address = ETH_ADDRESS;
-                walletInfo.name = "Metamask";
-                walletInfo.description = "ETH wallet";
-                walletInfo.walletType = "eth";
-                if(TEST_MODEL) {
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.i(TAG, "change handleUri:" + false);
-                            if(RandomUtils.randomBoolean()) {
-                                Web3MQSign.getInstance().sendConnectResponse(true, walletInfo, false);
-                                if(redirect!=null){
-                                    Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
-                                    startActivity(intent);
-                                }
-                            }else{
-                                Web3MQSign.getInstance().sendConnectResponse(false, null, false);
-                                if(!TextUtils.isEmpty(redirect)){
-                                    Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
-                                    startActivity(intent);
-                                }
-                            }
-                        }
-                    }, 1000);
-                }else{
-                    walletSignFragment.showConnectBottomDialog(MainActivity.this, website,iconUrl,walletInfo);
+            public void initSuccess() {
+                BridgeMessageMetadata metaData = new BridgeMessageMetadata();
+                metaData.name = "Web3MQ Wallet";
+                metaData.description = "ETH wallet";
+                metaData.walletType = "eth";
+                String icon = null;
+                if(request.icons!=null&&request.icons.size()>0){
+                    icon = request.icons.get(0);
                 }
-
+                walletSignFragment.hideLoadingDialog();
+                walletSignFragment.showConnectBottomDialog(MainActivity.this,request.id, request.url,icon,metaData,ETH_ADDRESS);
             }
 
             @Override
             public void onFail(String error) {
+                walletSignFragment.hideLoadingDialog();
                 Toast.makeText(MainActivity.this,error,Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void handleConnectUri(Uri uri){
-        if(uri == null){
+    private void handleConnectUri(Uri uri) {
+        if(uri ==null){
             return;
         }
-        Log.i(TAG,"handling_connect_uri:"+handling_connect_uri+" uri:"+uri.toString());
-        if(!uri.toString().equals(handling_connect_uri)){
-            handling_connect_uri = uri.toString();
-            String action = uri.getQueryParameter("action");
-            Log.i(TAG,"url action:"+action);
-            if(action.equals("connect")){
-                topicId = uri.getQueryParameter("topicId");
-                iconUrl = uri.getQueryParameter("iconUrl");
-                website = uri.getQueryParameter("website");
-                redirect = uri.getQueryParameter("redirect");
-                ed25519Pubkey = uri.getQueryParameter("ed25519Pubkey");
-                Log.i(TAG,"topicId:"+topicId+" iconUrl:"+iconUrl+" website:"+website+" redirect:"+redirect);
-
+//        Log.i(TAG,"handling_connect_uri:"+handling_connect_uri+" uri:"+uri);
+//        if(!uri.toString().equals(handling_connect_uri)){
+//            handling_connect_uri = uri.toString();
+            ConnectRequest request = ConvertUtil.convertDeepLinkToConnectRequest(uri.toString());
+            if(request.method!=null && request.method.equals("provider_authorization")){
+                Web3MQSign.getInstance().walletBuildAndSaveSession(request);
                 walletSignFragment.setOnConnectCallback(new OnConnectCallback() {
 
                     @Override
                     public void connectApprove() {
-                        Log.i(TAG,"connectApprove redirect:"+redirect);
-                        if(!TextUtils.isEmpty(redirect)){
-                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
-                            startActivity(intent);
+                        if(!fromRemote){
+                            moveTaskToBack(true);
                         }
+
+//                        if(!TextUtils.isEmpty(request.redirect)){
+//                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(request.redirect));
+//                            startActivity(intent);
+//                        }
                     }
 
                     @Override
                     public void connectReject() {
-                        Log.i(TAG,"connectReject redirect:"+redirect);
-                        if(!TextUtils.isEmpty(redirect)){
-                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
-                            startActivity(intent);
+                        if(!fromRemote){
+                            moveTaskToBack(true);
                         }
+                        Log.i(TAG,"connectReject redirect:"+request.redirect);
+//                        if(!TextUtils.isEmpty(request.redirect)){
+//                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(request.redirect));
+//                            startActivity(intent);
+//                        }
                     }
                 });
 
                 Web3MQSign.getInstance().setOnSignRequestMessageCallback(new OnSignRequestMessageCallback() {
                     @Override
-                    public void onSignRequestMessage(BridgeMessageProposer proposer, String address, String sign_raw,String requestId, String userInfo) {
+                    public void onSignRequestMessage(String id, Participant participant, String address, String sign_raw) {
                         Log.i(TAG,"sign_raw: "+sign_raw);
                         if(TEST_MODEL){
                             new Handler().postDelayed(new Runnable() {
@@ -184,25 +231,24 @@ public class MainActivity extends AppCompatActivity {
                                 public void run() {
                                     if(RandomUtils.randomBoolean()){
                                         String signature = CryptoUtils.signMessage(ETH_PRV_KEY,sign_raw);
-                                        Web3MQSign.getInstance().sendSignResponse(true,signature,requestId,userInfo,false);
-                                        if(!TextUtils.isEmpty(redirect)){
-                                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
+                                        Web3MQSign.getInstance().sendSignResponse(id,true,signature,false,null);
+                                        if(!TextUtils.isEmpty(request.redirect)){
+                                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(request.redirect));
                                             startActivity(intent);
                                         }
 
                                     }else{
-                                        Web3MQSign.getInstance().sendSignResponse(false,null,requestId,userInfo,false);
-                                        if(!TextUtils.isEmpty(redirect)){
-                                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
+                                        Web3MQSign.getInstance().sendSignResponse(id,false,null,false,null);
+                                        if(!TextUtils.isEmpty(request.redirect)){
+                                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(request.redirect));
                                             startActivity(intent);
                                         }
                                     }
                                 }
                             },1000);
                         }else{
-                            walletSignFragment.showSignBottomDialog(proposer,address,sign_raw,requestId,userInfo);
+                            walletSignFragment.showSignBottomDialog(id, participant,address,sign_raw);
                         }
-
                     }
                 });
 
@@ -215,28 +261,36 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void signApprove(String redirect) {
-                        if(!TextUtils.isEmpty(redirect)){
-                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
-                            startActivity(intent);
+//                        moveTaskToBack(true);
+//                        if(!TextUtils.isEmpty(redirect)){
+////                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
+////                            startActivity(intent);
+//                            moveTaskToBack(true);
+//                        }
+
+                        if(!fromRemote){
+                            moveTaskToBack(true);
                         }
+
                     }
 
                     @Override
                     public void signReject(String redirect) {
-                        if(!TextUtils.isEmpty(redirect)){
-                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
-                            startActivity(intent);
+                        if(!fromRemote){
+                            moveTaskToBack(true);
                         }
+//                        if(!TextUtils.isEmpty(redirect)){
+////                            Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse(redirect));
+////                            startActivity(intent);
+//                            moveTaskToBack(true);
+//                        }
+
                     }
                 });
-                initSignFragment();
+                initSignFragment(request);
+            }
+//        }
 
-            }
-            if (!walletSignFragment.isAdded()) {
-                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                transaction.add(R.id.fl_content, walletSignFragment).commitAllowingStateLoss();
-            }
-        }
     }
 
     private void initView(){
@@ -273,7 +327,9 @@ public class MainActivity extends AppCompatActivity {
             if(extras != null){
                 String code = extras.getString(ScanCodeConfig.CODE_KEY);
                 Log.i(TAG,"code:"+code);
+                fromRemote = true;
                 handleConnectUri(Uri.parse(code));
+
             }
         }
     }

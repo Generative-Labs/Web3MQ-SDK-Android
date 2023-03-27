@@ -1,21 +1,29 @@
 package com.ty.sample.activity;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.google.android.material.bottomnavigation.BottomNavigationItemView;
+import com.google.android.material.bottomnavigation.BottomNavigationMenuView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.ty.common.Web3MQUI;
 import com.ty.common.config.Constants;
+import com.ty.common.utils.CommonUtils;
 import com.ty.module_chat.ModuleChat;
 import com.ty.module_chat.fragment.ChatsFragment;
 import com.ty.module_contact.fragment.ContactsFragment;
@@ -26,16 +34,22 @@ import com.ty.module_profile.fragment.MyProfileFragment;
 import com.ty.moudle_new_message.NewMessageFragment;
 import com.ty.sample.R;
 import com.ty.web3_mq.Web3MQClient;
+import com.ty.web3_mq.Web3MQMessageManager;
 import com.ty.web3_mq.Web3MQNotification;
 import com.ty.web3_mq.http.beans.NotificationBean;
+import com.ty.web3_mq.interfaces.ChatsMessageCallback;
 import com.ty.web3_mq.interfaces.NotificationMessageCallback;
 import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
+import com.ty.web3_mq.interfaces.OnWebsocketClosedCallback;
 
 import java.util.ArrayList;
+
+import web3mq.Message;
 
 public class HomePageActivity extends AppCompatActivity {
     private Fragment currentFragment;
     private BottomNavigationView bottom_navigation_view;
+    private ConstraintLayout cl_reconnect;
     private static final String TAG = "HomePageActivity";
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,8 +68,19 @@ public class HomePageActivity extends AppCompatActivity {
                 Toast.makeText(HomePageActivity.this,"init fail",Toast.LENGTH_SHORT).show();
             }
         });
+        Web3MQClient.getInstance().setOnWebsocketClosedCallback(new OnWebsocketClosedCallback() {
+            @Override
+            public void onClose() {
+                //TODO showReconnectDialog
+                cl_reconnect.setVisibility(View.VISIBLE);
+                Web3MQClient.getInstance().reconnect();
+                sendConnectCommand();
+            }
+        });
         initView();
         setListener();
+        listenToNotificationMessageEvent();
+//        listenToChatMessageEvent();
     }
 
     private void sendConnectCommand(){
@@ -63,12 +88,14 @@ public class HomePageActivity extends AppCompatActivity {
             @Override
             public void onConnectCommandResponse() {
                 Log.i(TAG,"onConnectCommandResponse Success");
+                cl_reconnect.setVisibility(View.GONE);
             }
         });
     }
 
     private void initView(){
         bottom_navigation_view = findViewById(R.id.bottom_navigation_view);
+        cl_reconnect = findViewById(R.id.cl_reconnect);
         switchContent(ChatsFragment.getInstance());
     }
 
@@ -79,16 +106,21 @@ public class HomePageActivity extends AppCompatActivity {
                 switch (item.getItemId()){
                     case R.id.navigation_chats:
                         switchContent(ChatsFragment.getInstance());
+                        listenToNotificationMessageEvent();
+                        hideRedDot(0);
                         break;
                     case R.id.navigation_contact:
                         switchContent(ContactsFragment.getInstance());
+                        listenToNotificationMessageEvent();
                         break;
                     case R.id.navigation_notifications:
                         switchContent(NotificationFragment.getInstance());
+                        hideRedDot(2);
                         NotificationFragment.getInstance().listenToNotificationMessageEvent();
                         break;
                     case R.id.navigation_profile:
                         switchContent(MyProfileFragment.getInstance());
+                        listenToNotificationMessageEvent();
                         break;
                 }
                 return true;
@@ -139,13 +171,13 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
+
     private void listenToNotificationMessageEvent(){
         Web3MQNotification.getInstance().setOnNotificationMessageEvent(new NotificationMessageCallback() {
             @Override
             public void onNotificationMessage(ArrayList<NotificationBean> response) {
                 //TODO 通知小红点
-//                notifications.addAll(0,response);
-//                adapter.notifyDataSetChanged();
+                showRedDot(2);
             }
         });
     }
@@ -165,6 +197,44 @@ public class HomePageActivity extends AppCompatActivity {
                 transaction.hide(currentFragment).show(to).commitAllowingStateLoss(); // 隐藏当前的fragment，显示下一个
             }
             currentFragment = to;
+        }
+    }
+
+    public void showRedDot(int position){
+        BottomNavigationMenuView menuView = null;
+        for (int i = 0; i < bottom_navigation_view.getChildCount(); i++) {
+            View child = bottom_navigation_view.getChildAt(i);
+            if (child instanceof BottomNavigationMenuView) {
+                menuView = (BottomNavigationMenuView) child;
+                break;
+            }
+        }
+        if (menuView != null) {
+            BottomNavigationItemView.LayoutParams params = new BottomNavigationItemView.LayoutParams(CommonUtils.dp2px(this,8), CommonUtils.dp2px(this,8));
+            params.gravity = Gravity.RIGHT;
+            params.rightMargin = CommonUtils.dp2px(this,25);
+            params.topMargin = CommonUtils.dp2px(this,7);
+            BottomNavigationItemView itemView = (BottomNavigationItemView) menuView.getChildAt(position);
+            ImageView dotView = new ImageView(this);
+            dotView.setImageResource(R.mipmap.ic_red_dot);
+            itemView.addView(dotView, params);
+        }
+    }
+
+    private void hideRedDot(int position){
+        BottomNavigationMenuView menuView = null;
+        for (int i = 0; i < bottom_navigation_view.getChildCount(); i++) {
+            View child = bottom_navigation_view.getChildAt(i);
+            if (child instanceof BottomNavigationMenuView) {
+                menuView = (BottomNavigationMenuView) child;
+                break;
+            }
+        }
+        if (menuView != null) {
+            BottomNavigationItemView itemView = (BottomNavigationItemView) menuView.getChildAt(position);
+            if(itemView.getChildCount()>2){
+                itemView.removeViewAt(itemView.getChildCount()-1);
+            }
         }
     }
 }

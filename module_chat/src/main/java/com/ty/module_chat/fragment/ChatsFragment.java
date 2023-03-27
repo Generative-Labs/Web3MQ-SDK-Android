@@ -21,6 +21,8 @@ import com.ty.common.view.Web3MQListView;
 import com.ty.module_chat.R;
 import com.ty.module_chat.adapter.ChatsAdapter;
 import com.ty.module_chat.bean.ChatItem;
+import com.ty.module_chat.bean.MessageItem;
+import com.ty.module_chat.utils.Tools;
 import com.ty.web3_mq.Web3MQChats;
 import com.ty.web3_mq.Web3MQMessageManager;
 import com.ty.web3_mq.http.beans.ChatBean;
@@ -50,6 +52,7 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
     private static final int INIT_CHATS_SIZE = 100;
     private ToNewMessageListener toNewMessageListener;
     private ImageView iv_new_message;
+    private boolean hidden;
     public static synchronized ChatsFragment getInstance() {
         if (instance == null) {
             instance = new ChatsFragment();
@@ -66,18 +69,23 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
     @Override
     protected void onBaseCreateView() {
         super.onBaseCreateView();
-        requestData();
         initView();
         setListener();
+        requestData();
+//        ArrayList<ChatItem> local_chats = Tools.getChatItemList();
+//        if(local_chats!=null){
+//            chats = local_chats;
+//            updateView();
+//        }else{
+//
+//        }
     }
 
     @Override
     public void onHiddenChanged(boolean hidden) {
         Log.i(TAG,"hidden:"+hidden);
         super.onHiddenChanged(hidden);
-        if(!hidden){
-            requestData();
-        }
+        this.hidden = hidden;
     }
 
     public void setToNewMessageListener(ToNewMessageListener toNewMessageListener){
@@ -93,6 +101,7 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
         Log.i(TAG,"Payload:"+message.getPayload().toStringUtf8());
         Log.i(TAG,"PayloadType:"+message.getPayloadType());
         Log.i(TAG,"ContentTopic:"+message.getContentTopic());
+        boolean exist = false;
         for(int i=0;i<chats.size();i++){
             ChatItem chatItem = chats.get(i);
             switch (chatItem.chat_type){
@@ -100,18 +109,28 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
                     if(message.getComeFrom().equals(chatItem.chatid)){
                         chatItem.unreadCount+=1;
                         chatItem.content = message.getPayload().toStringUtf8();
+                        chatItem.timestamp = message.getTimestamp();
                         chatsAdapter.notifyItemChanged(i);
+//                        Tools.updateChatItem(chatItem.chatid,chatItem.content,chatItem.timestamp,chatItem.unreadCount);
+                        exist = true;
                     }
                     break;
                 case ChatItem.CHAT_TYPE_GROUP:
                     if(message.getContentTopic().equals(chatItem.chatid)){
                         chatItem.unreadCount+=1;
                         chatItem.content = message.getPayload().toStringUtf8();
+                        chatItem.timestamp = message.getTimestamp();
                         chatsAdapter.notifyItemChanged(i);
+//                        Tools.updateChatItem(chatItem.chatid,chatItem.content,chatItem.timestamp,chatItem.unreadCount);
+                        exist = true;
                     }
                     break;
             }
         }
+        if(!exist){
+            requestData();
+        }
+        Tools.saveChatItemList(chats);
     }
 
     public interface ToNewMessageListener {
@@ -124,26 +143,21 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
             public void onSuccess(ChatsBean chatsBean) {
                 recycler_view_chats.setRefreshing(false);
                 chats.clear();
-                if(chatsBean.result.size()==0){
-                    recycler_view_chats.showEmptyView();
-                }else{
-                    recycler_view_chats.hideEmptyView();
-                }
-
                 for(ChatBean chatBean:chatsBean.result){
                     ChatItem chatItem = new ChatItem();
                     chatItem.chat_type = chatBean.chat_type;
                     chatItem.chatid = chatBean.topic;
                     chatItem.title = chatBean.chat_name;
-                    // get timestamp and content from local storage
-                    MessagesBean bean = DefaultSPHelper.getInstance().getMessages(chatItem.chatid);
-                    if(bean!=null&&bean.result.size()>0){
-                        MessageBean lastMessageBean = bean.result.get(0);
-                        chatItem.timestamp = lastMessageBean.timestamp;
-                        chatItem.content = new String(Base64.decode(lastMessageBean.payload,Base64.DEFAULT));
-                    }
+                    //TODO get timestamp and content from local storage
+//                    ArrayList<MessageItem> itemList = Tools.getMessageItemList(chatItem.chatid);
+//                    if(itemList!=null && itemList.size()>0){
+//                        MessageItem item = itemList.get(0);
+//                        chatItem.timestamp = item.timestamp;
+//                        chatItem.content = item.content;
+//                    }
                     chats.add(chatItem);
                 }
+                fixChatItemWithLocal();
                 updateView();
             }
 
@@ -153,6 +167,23 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
                 recycler_view_chats.setRefreshing(false);
             }
         });
+    }
+
+    private void fixChatItemWithLocal(){
+        ArrayList<ChatItem> local_chats = Tools.getChatItemList();
+        if(local_chats == null|| local_chats.size()==0){
+            return;
+        }
+        for(int i=0; i<chats.size(); i++){
+            for(ChatItem chatItemLocal: local_chats){
+                if(chats.get(i).chatid.equals(chatItemLocal.chatid)){
+                    ChatItem chatItem = chats.get(i);
+                    chatItem.content = chatItemLocal.content;
+                    chatItem.timestamp = chatItemLocal.timestamp;
+                    chatItem.unreadCount = chatItemLocal.unreadCount;
+                }
+            }
+        }
     }
 
 
@@ -165,6 +196,11 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
     }
 
     private void updateView(){
+        if(chats.size()==0){
+            recycler_view_chats.showEmptyView();
+        }else{
+            recycler_view_chats.hideEmptyView();
+        }
         chatsAdapter = new ChatsAdapter(chats);
         recycler_view_chats.setAdapter(chatsAdapter);
         chatsAdapter.setOnItemClickListener(new ChatsAdapter.OnItemClickListener() {
@@ -200,6 +236,10 @@ public class ChatsFragment extends BaseFragment implements ChatsMessageCallback{
             }
         });
         //TODO 监听websocket更新列表
+        setChatsCallback();
+    }
+
+    public void setChatsCallback(){
         Web3MQMessageManager.getInstance().setChatsMessageCallback(this);
     }
 

@@ -16,6 +16,12 @@ public class RandomUtils {
         return random.nextBoolean();
     }
 
+    public static int random4Number(){
+        Random random = new Random();
+        int randomNum = random.nextInt(9000) + 1000;
+        return randomNum;
+    }
+
     private static String bytesToHex(byte[] bytes){
         StringBuilder hexString = new StringBuilder(bytes.length);
         for(int i=0;i<bytes.length;i++){

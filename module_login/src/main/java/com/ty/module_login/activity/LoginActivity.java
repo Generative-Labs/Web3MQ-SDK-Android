@@ -11,22 +11,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
-import com.alibaba.android.arouter.launcher.ARouter;
 import com.ty.common.activity.BaseActivity;
 import com.ty.common.config.RouterPath;
 import com.ty.module_login.ModuleLogin;
 import com.ty.module_login.R;
 import com.ty.module_login.view.InputPwdView;
-import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.Web3MQUser;
 import com.ty.web3_mq.interfaces.LoginCallback;
-import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
 import com.ty.web3_mq.interfaces.OnSignResponseMessageCallback;
 import com.ty.web3_mq.utils.CryptoUtils;
 import com.ty.web3_mq.utils.Ed25519;
@@ -120,11 +116,11 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void sendSign(String sign_raw){
-        BridgeMessageProposer proposer = new BridgeMessageProposer();
-        proposer.name = "Web3MQ_DAPP_DEMO";
-        proposer.url = "www.web3mq_dapp.com";
-        proposer.redirect = "web3mq_dapp_login://";
-        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,System.currentTimeMillis()+"","",false);
+//        BridgeMessageProposer proposer = new BridgeMessageProposer();
+//        proposer.name = "Web3MQ_DAPP_DEMO";
+//        proposer.url = "www.web3mq_dapp.com";
+//        proposer.redirect = "web3mq_dapp_login://";
+        Web3MQSign.getInstance().sendSignRequest(sign_raw,wallet_address,false,null);
     }
 
 //    public void setUserInfo(String userid,String wallet_type,String wallet_address){

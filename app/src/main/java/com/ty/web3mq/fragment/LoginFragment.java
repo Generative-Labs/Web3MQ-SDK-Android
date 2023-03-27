@@ -14,9 +14,9 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.interfaces.SendBridgeMessageCallback;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.Web3MQUser;
-import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.LoginCallback;
 import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
 import com.ty.web3_mq.interfaces.OnSignResponseMessageCallback;
@@ -126,11 +126,22 @@ public class LoginFragment extends BaseFragment {
     }
 
     private void sendSign(String sign_raw){
-        BridgeMessageProposer proposer = new BridgeMessageProposer();
-        proposer.name = "Web3MQ_DAPP_DEMO";
-        proposer.url = "www.web3mq_dapp.com";
-        proposer.redirect = "redirect";
-        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,System.currentTimeMillis()+"","",false);
+        Web3MQSign.getInstance().sendSignRequest(sign_raw, wallet_address, false, new SendBridgeMessageCallback() {
+            @Override
+            public void onReceived() {
+
+            }
+
+            @Override
+            public void onFail() {
+
+            }
+
+            @Override
+            public void onTimeout() {
+
+            }
+        });
     }
 
     public void setUserInfo(String userid,String wallet_type,String wallet_address){

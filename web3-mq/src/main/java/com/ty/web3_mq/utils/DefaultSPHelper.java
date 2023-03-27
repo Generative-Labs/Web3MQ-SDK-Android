@@ -2,19 +2,29 @@ package com.ty.web3_mq.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.ty.web3_mq.http.beans.MessageBean;
 import com.ty.web3_mq.http.beans.MessagesBean;
+import com.ty.web3_mq.websocket.bean.ErrorResponse;
+import com.ty.web3_mq.websocket.bean.SignRequest;
+import com.ty.web3_mq.websocket.bean.SignResponseSuccessData;
+import com.ty.web3_mq.websocket.bean.SignSuccessResponse;
+import com.ty.web3_mq.websocket.bean.sign.SignConversation;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSession;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.HashMap;
+
+import web3mq.Message;
 
 
 public class DefaultSPHelper {
-
+    private static final String TAG = "DefaultSPHelper";
     private static final String PREFERENCE_NAME = "web3_mq";
     private static volatile DefaultSPHelper instance;
     private SharedPreferences mPreferences;
@@ -31,12 +41,21 @@ public class DefaultSPHelper {
                 if (instance == null) {
                     instance = new DefaultSPHelper();
                     gson = new GsonBuilder()
+                            .setPrettyPrinting()
                             .disableHtmlEscaping()
                             .create();
                 }
             }
         }
         return instance;
+    }
+
+    public void saveNodeID(String node_id) {
+        put(Constant.SP_NODE_ID,node_id);
+    }
+
+    public String getNodeID(){
+        return getString(Constant.SP_NODE_ID,null);
     }
 
     public void saveMainPrivate(String prv){
@@ -87,17 +106,18 @@ public class DefaultSPHelper {
         return getString(Constant.SP_DID_KEY);
     }
 
-    public void saveMessage(String chatId, MessagesBean message){
-        put(chatId,message);
-    }
 
+//    public MessagesBean getMessages(String chatId){
+//        return (MessagesBean) getObject(chatId,MessagesBean.class);
+//    }
 
-    public MessagesBean getMessages(String chatId){
-        return (MessagesBean) getObject(chatId,MessagesBean.class);
-    }
-
-    public Object getObject(String key,Class cls){
-        return gson.fromJson(getString(key),cls);
+    public Object getObject(String key,Type type){
+        String json_str = getString(key);
+        if(json_str!=null){
+            return gson.fromJson(json_str,type);
+        }else{
+            return null;
+        }
     }
 
     /**
@@ -227,6 +247,16 @@ public class DefaultSPHelper {
         return mPreferences.getFloat(key, defValue);
     }
 
+    public boolean put(String key, ArrayList<String> value){
+        SharedPreferences.Editor editor = mPreferences.edit();
+        String json = gson.toJson(value);
+        editor.putString(key, json);
+        return editor.commit();
+    }
+
+
+
+
     /**
      * delete in preferences value
      */
@@ -235,6 +265,155 @@ public class DefaultSPHelper {
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.remove(key);
         return editor.commit();
+    }
+
+//    private void saveSession(String sessionID, Web3MQSession session) {
+//        String json = gson.toJson(session);
+//        put("session:"+sessionID,json);
+//        Log.i(TAG,"saveSession session:"+sessionID+"   "+json);
+//    }
+
+    public void appendSession(Web3MQSession session){
+        ArrayList<Web3MQSession> sessionList = getSessionList();
+        if(sessionList == null){
+            sessionList = new ArrayList<>();
+        }
+        sessionList.add(session);
+        saveSessionList(sessionList);
+    }
+
+    public void removeSession(String sessionID){
+        ArrayList<Web3MQSession> sessionList = getSessionList();
+        if(sessionList == null){
+            return;
+        }
+        for(int i=0;i<sessionList.size();i++){
+            Web3MQSession session = sessionList.get(i);
+            if(session.peerTopic.equals(sessionID)){
+                sessionList.remove(i);
+                if(sessionList.size()>0){
+                    saveSessionList(sessionList);
+                }
+                break;
+            }
+        }
+    }
+
+    public Web3MQSession getSession(String sessionID) {
+        ArrayList<Web3MQSession> sessionList = getSessionList();
+        if(sessionList==null){
+            return null;
+        }
+        for(Web3MQSession session:sessionList){
+            if(session.peerTopic.equals(sessionID)){
+                return session;
+            }
+        }
+        return null;
+    }
+
+    public void updateSession(String sessionID,Web3MQSession newSession) {
+//        Log.i(TAG,"updateSession sessionID:"+sessionID+" newSession:"+gson.toJson(newSession));
+        ArrayList<Web3MQSession> sessionList = getSessionList();
+        if(sessionList==null){
+            return;
+        }
+        for(int i=0;i<sessionList.size();i++){
+            Web3MQSession session = sessionList.get(i);
+            if(session.peerTopic.equals(sessionID)){
+                sessionList.set(i,newSession);
+                break;
+            }
+        }
+        saveSessionList(sessionList);
+    }
+
+    private void saveSessionList(ArrayList<Web3MQSession> sessionList){
+        put("sessionList",gson.toJson(sessionList));
+    }
+
+    public ArrayList<Web3MQSession> getSessionList(){
+        String json = mPreferences.getString("sessionList", null);
+        if(json!=null){
+            Type type = new TypeToken<ArrayList<Web3MQSession>>() {}.getType();
+            return gson.fromJson(json, type);
+        }else{
+            return null;
+        }
+    }
+
+    public void appendSignRequest(String sessionID, String id, SignRequest signRequest){
+//        Log.i(TAG,"appendSignRequest sessionID:"+sessionID+" id:"+id);
+        Web3MQSession web3MQSession = getSession(sessionID);
+        if(web3MQSession.signConversationMap == null) {
+            web3MQSession.signConversationMap = new HashMap<>();
+        }
+        SignConversation conversation = new SignConversation();
+        conversation.id = id;
+        conversation.request = signRequest;
+        web3MQSession.signConversationMap.put(id,conversation);
+        updateSession(sessionID,web3MQSession);
+    }
+
+
+//    public ArrayList<String> getRequestList(String sessionID) {
+//        String json = mPreferences.getString("request:"+sessionID, null);
+//        if(json!=null){
+//            Type type = new TypeToken<ArrayList<String>>() {}.getType();
+//            return gson.fromJson(json, type);
+//        }else{
+//            return null;
+//        }
+//    }
+
+    public void appendSignSuccessResponse(String sessionID, String id, SignSuccessResponse successResponse){
+        Web3MQSession web3MQSession = getSession(sessionID);
+        if(web3MQSession.signConversationMap == null) {
+            return;
+        }
+        SignConversation conversation = web3MQSession.signConversationMap.get(id);
+        if(conversation==null){
+            return;
+        }
+        conversation.successResponse = successResponse;
+        web3MQSession.signConversationMap.put(id,conversation);
+        updateSession(sessionID,web3MQSession);
+    }
+
+    public void appendSignErrorResponse(String sessionID, String id, ErrorResponse errorResponse){
+        Web3MQSession web3MQSession = getSession(sessionID);
+        if(web3MQSession.signConversationMap == null) {
+            return;
+        }
+        SignConversation conversation = web3MQSession.signConversationMap.get(id);
+        if(conversation==null){
+            return;
+        }
+        conversation.errorResponse = errorResponse;
+        web3MQSession.signConversationMap.put(id,conversation);
+        updateSession(sessionID,web3MQSession);
+    }
+
+//    public ArrayList<String> getResponseList(String sessionID){
+//        String json = mPreferences.getString("response:"+sessionID, null);
+//        if(json!=null){
+//            Type type = new TypeToken<ArrayList<String>>() {}.getType();
+//            return gson.fromJson(json, type);
+//        }else{
+//            return null;
+//        }
+//    }
+
+    public void showSessionInfo(){
+        Log.i(TAG,"----------showSessionInfo--------");
+        ArrayList<Web3MQSession> sessionList= getSessionList();
+        if(sessionList==null){
+            Log.i(TAG,"session list is null");
+        }else{
+            for(Web3MQSession session:sessionList){
+                Log.i(TAG,"session : "+gson.toJson(session)+"");
+            }
+        }
     }
 
     /**
@@ -246,5 +425,7 @@ public class DefaultSPHelper {
         editor.clear();
         return editor.commit();
     }
+
+
 
 }

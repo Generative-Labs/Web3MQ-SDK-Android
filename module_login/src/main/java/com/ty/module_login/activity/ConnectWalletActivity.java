@@ -15,15 +15,13 @@ import com.ty.common.config.AppConfig;
 import com.ty.common.config.Constants;
 import com.ty.common.config.RouterPath;
 import com.ty.module_login.R;
-import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.Web3MQUser;
 import com.ty.web3_mq.http.beans.UserInfo;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
-import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.GetUserinfoCallback;
 import com.ty.web3_mq.interfaces.OnConnectResponseCallback;
-import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
+import com.ty.web3_mq.websocket.bean.BridgeMessageMetadata;
 
 @Route(path = RouterPath.LOGIN_CONNECT_WALLET)
 public class ConnectWalletActivity extends BaseActivity {
@@ -46,15 +44,15 @@ public class ConnectWalletActivity extends BaseActivity {
         });
 
         Web3MQSign.getInstance().setOnConnectResponseCallback(new OnConnectResponseCallback() {
+
             @Override
-            public void onApprove(BridgeMessageWalletInfo walletInfo) {
+            public void onApprove(BridgeMessageMetadata walletInfo, String address) {
                 String walletName = walletInfo.name;
                 String walletType = walletInfo.walletType;
-                String walletAddress = walletInfo.address;
-                Web3MQUser.getInstance().getUserInfo(walletType, walletAddress, new GetUserinfoCallback() {
+                Web3MQUser.getInstance().getUserInfo(walletType, address, new GetUserinfoCallback() {
                     @Override
                     public void onSuccess(UserInfo userInfo) {
-                        // 有用户信息，跳转到登录
+                        // get user info success
                         Log.i(TAG,"getUserInfo onSuccess");
                         ARouter.getInstance().build(RouterPath.LOGIN_LOGIN).
                                 withString(Constants.ROUTER_KEY_LOGIN_USER_ID,userInfo.userid).
@@ -65,12 +63,12 @@ public class ConnectWalletActivity extends BaseActivity {
 
                     @Override
                     public void onUserNotRegister() {
-                        // 没有用户信息，跳转到注册
+                        // user not register
                         Log.i(TAG,"getUserInfo onUserNotRegister");
                         ARouter.getInstance().build(RouterPath.LOGIN_REGISTER).
                                 withString(Constants.ROUTER_KEY_LOGIN_WALLET_NAME,walletName).
                                 withString(Constants.ROUTER_KEY_LOGIN_WALLET_TYPE,walletType).
-                                withString(Constants.ROUTER_KEY_LOGIN_WALLET_ADDRESS,walletAddress.toLowerCase()).
+                                withString(Constants.ROUTER_KEY_LOGIN_WALLET_ADDRESS,address.toLowerCase()).
                                 navigation();
                     }
 

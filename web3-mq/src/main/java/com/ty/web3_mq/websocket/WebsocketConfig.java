@@ -2,9 +2,11 @@ package com.ty.web3_mq.websocket;
 
 public class WebsocketConfig {
     public static final String WS_PROTOCOL = "wss";
-    public static final String WS_HOST_URL = "dev-ap-jp-1.web3mq.com";
-//    public static final String WS_HOST_URL = "testnet-ap-jp-1.web3mq.com";
-    public static final String WS_URL = WebsocketConfig.WS_PROTOCOL+"://"+ WebsocketConfig.WS_HOST_URL+"/messages";
+    public static final String WS_DEV_HOST_URL = "dev-ap-jp-1.web3mq.com";
+    public static final String WS_TEST_NET_HOST_URL = "testnet-ap-jp-1.web3mq.com";
+    public static final String WS_URL_DEV = WebsocketConfig.WS_PROTOCOL+"://"+ WebsocketConfig.WS_DEV_HOST_URL +"/messages";
+    public static final String WS_URL_TEST_NET = WebsocketConfig.WS_PROTOCOL+"://"+ WebsocketConfig.WS_TEST_NET_HOST_URL +"/messages";
+
     // ping
     public static final byte PbTypePingCommand = (byte) 0b10000000;
     public static final byte PbTypePongCommand = (byte) 0b10000001;

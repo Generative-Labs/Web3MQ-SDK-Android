@@ -16,7 +16,7 @@ import com.ty.module_notification.R;
 import com.ty.module_notification.adapter.NotificationAdapter;
 import com.ty.web3_mq.Web3MQFollower;
 import com.ty.web3_mq.Web3MQNotification;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.http.beans.NotificationBean;
 import com.ty.web3_mq.http.beans.NotificationsBean;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
@@ -28,7 +28,7 @@ import com.ty.web3_mq.interfaces.OnSignResponseMessageCallback;
 import com.ty.web3_mq.utils.CryptoUtils;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
-import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
+import com.ty.web3_mq.websocket.bean.BridgeMessageMetadata;
 
 import java.util.ArrayList;
 
@@ -56,7 +56,14 @@ public class NotificationFragment extends BaseFragment {
         super.onBaseCreateView();
         requestData();
         initView();
+    }
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if(!hidden){
+            requestData();
+        }
     }
 
     public void listenToNotificationMessageEvent(){
@@ -137,9 +144,10 @@ public class NotificationFragment extends BaseFragment {
             });
         }
         Web3MQSign.getInstance().setOnConnectResponseCallback(new OnConnectResponseCallback() {
+
             @Override
-            public void onApprove(BridgeMessageWalletInfo walletInfo) {
-                toSign(action,walletInfo.walletType,walletInfo.address,target_user_id);
+            public void onApprove(BridgeMessageMetadata walletInfo, String address) {
+                toSign(action,walletInfo.walletType,address,target_user_id);
             }
 
             @Override
@@ -161,7 +169,7 @@ public class NotificationFragment extends BaseFragment {
         String userid = DefaultSPHelper.getInstance().getUserID();
         String nonce = CryptoUtils.SHA3_ENCODE(userid + action + target_user_id + timestamp);
         String sign_raw = Web3MQFollower.getInstance().getFollowSignContent(wallet_type,wallet_address,nonce);
-        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,timestamp+"","",false);
+        Web3MQSign.getInstance().sendSignRequest(sign_raw,wallet_address,false,null);
         Web3MQSign.getInstance().setOnSignResponseMessageCallback(new OnSignResponseMessageCallback() {
             @Override
             public void onApprove(String signature) {

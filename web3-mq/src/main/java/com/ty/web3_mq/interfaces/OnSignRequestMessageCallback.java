@@ -1,7 +1,7 @@
 package com.ty.web3_mq.interfaces;
 
-import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
+import com.ty.web3_mq.websocket.bean.sign.Participant;
 
 public interface OnSignRequestMessageCallback {
-    void onSignRequestMessage(BridgeMessageProposer proposer,String address, String sign_raw, String requestId, String userInfo);
+    void onSignRequestMessage(String id,Participant participant, String address, String sign_raw);
 }

@@ -15,9 +15,7 @@ import com.ty.common.config.RouterPath;
 import com.ty.module_login.ModuleLogin;
 import com.ty.module_login.R;
 import com.ty.module_login.config.UIConfigStart;
-import com.ty.web3_mq.Web3MQClient;
 import com.ty.web3_mq.Web3MQUser;
-import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
 
 @Route(path = RouterPath.LOGIN_START)
 public class StartActivity extends BaseActivity {
@@ -30,7 +28,7 @@ public class StartActivity extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContent(R.layout.activity_start);
-        if(Web3MQUser.getInstance().isLocalAccountExist()){
+        if(Web3MQUser.getInstance().hasLogged()){
             ModuleLogin.getInstance().getOnLoginSuccessCallback().onLoginSuccess();
         }else {
             initView();

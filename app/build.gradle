@@ -10,7 +10,7 @@ android {
     compileSdk 33
     defaultConfig {
         applicationId "com.ty.web3mq"
-        minSdk 23
+        minSdk 26
         targetSdk 33
         versionCode 1
         versionName "0.1.0"

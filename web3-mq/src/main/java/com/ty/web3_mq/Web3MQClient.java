@@ -7,9 +7,9 @@ import android.util.Log;
 import com.ty.web3_mq.http.ApiConfig;
 import com.ty.web3_mq.http.HttpManager;
 import com.ty.web3_mq.http.response.PingResponse;
-import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
+import com.ty.web3_mq.interfaces.OnWebsocketClosedCallback;
 import com.ty.web3_mq.utils.CommonUtils;
 import com.ty.web3_mq.utils.DefaultSPHelper;
 import com.ty.web3_mq.utils.Ed25519;
@@ -33,8 +33,6 @@ public class Web3MQClient {
     private volatile static Web3MQClient web3MQClient;
     private Web3MQSocketClient socketClient;
     private String api_key;
-    private String prv_key_seed;
-    private String userid;
     private String node_id;
     private Web3MQClient() {
 
@@ -61,19 +59,40 @@ public class Web3MQClient {
 
     private void initWebSocket() {
         if(socketClient ==null){
-            URI uri = URI.create(WebsocketConfig.WS_URL);
-            Log.i(TAG,"ws_url:"+WebsocketConfig.WS_URL);
+            URI uri = URI.create(WebsocketConfig.WS_URL_DEV);
+            Log.i(TAG,"ws_url:"+WebsocketConfig.WS_URL_DEV);
             socketClient = new Web3MQSocketClient(uri);
         }
     }
 
+    public void switchUri(String uri){
+        URI new_uri = URI.create(uri);
+        socketClient.switchUri(new_uri);
+    }
+
+    public void setOnWebsocketClosedCallback(OnWebsocketClosedCallback callback){
+        socketClient.setOnWebsocketClosedCallback(callback);
+    }
+
+    public void reconnect(){
+        try {
+            socketClient.reconnectBlocking();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void startConnect(ConnectCallback connectCallback){
-//        MessageManager.getInstance().setConnectCallback(connectCallback);
-        //TODO nodeID做本地缓存策略
+        node_id = DefaultSPHelper.getInstance().getNodeID();
+        if(node_id !=null){
+            connectWebSocket(connectCallback, node_id);
+            return;
+        }
         HttpManager.getInstance().get(ApiConfig.PING, null,null,null, PingResponse.class, new HttpManager.Callback<PingResponse>() {
             @Override
             public void onResponse(PingResponse response) {
                 node_id = response.getData().NodeID;
+                DefaultSPHelper.getInstance().saveNodeID(node_id);
                 Log.i("getNodeId","NodeID:"+node_id);
                 connectWebSocket(connectCallback, node_id);
             }
@@ -128,8 +147,6 @@ public class Web3MQClient {
         Web3MQClient.getInstance().getSocketClient().send(connectBridgeBytes);
     }
 
-
-
     private void connectWebSocket(ConnectCallback connectCallback, String node_id) {
         if(node_id!=null){
             if (socketClient == null) {
@@ -164,7 +181,7 @@ public class Web3MQClient {
         return this.node_id;
     }
 
-    protected Web3MQSocketClient getSocketClient(){
+    public Web3MQSocketClient getSocketClient(){
         return this.socketClient;
     }
 

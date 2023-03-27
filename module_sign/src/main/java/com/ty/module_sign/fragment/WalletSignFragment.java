@@ -2,12 +2,12 @@ package com.ty.module_sign.fragment;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -19,12 +19,13 @@ import com.ty.module_sign.interfaces.OnConnectCallback;
 import com.ty.module_sign.interfaces.OnSignCallback;
 import com.ty.module_sign.interfaces.WalletInitCallback;
 import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.interfaces.SendBridgeMessageCallback;
+import com.ty.web3_mq.websocket.bean.sign.Participant;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.utils.AppUtils;
-import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
-import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
+import com.ty.web3_mq.websocket.bean.BridgeMessageMetadata;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +63,7 @@ public class WalletSignFragment extends BaseFragment {
                 Web3MQSign.getInstance().init(dAppID, new BridgeConnectCallback() {
                     @Override
                     public void onConnectCallback() {
-                        callback.onSuccess();
+                        callback.initSuccess();
                     }
                 });
                 Web3MQSign.getInstance().setTargetTopicID(topicId);
@@ -76,7 +77,14 @@ public class WalletSignFragment extends BaseFragment {
 
             @Override
             public void alreadyConnected() {
-                callback.onSuccess();
+                Web3MQSign.getInstance().init(dAppID, new BridgeConnectCallback() {
+                    @Override
+                    public void onConnectCallback() {
+                        callback.initSuccess();
+                    }
+                });
+                Web3MQSign.getInstance().setTargetTopicID(topicId);
+                Web3MQSign.getInstance().setTargetPubKey(pubKey);
             }
         });
     }
@@ -91,7 +99,7 @@ public class WalletSignFragment extends BaseFragment {
         this.connectCallback = onConnectCallback;
     }
 
-    public void showConnectBottomDialog(Context context, String website, String iconUrl, @NotNull BridgeMessageWalletInfo walletInfo) {
+    public void showConnectBottomDialog(Context context,String id, String website, String iconUrl, @NotNull BridgeMessageMetadata walletInfo,String address) {
         if(bottomSheetDialog!=null && bottomSheetDialog.isShowing()){
             bottomSheetDialog.dismiss();
         }
@@ -108,12 +116,13 @@ public class WalletSignFragment extends BaseFragment {
         if(iconUrl!=null){
             Glide.with(context).load(iconUrl).into(iv_website_icon);
         }
-        tv_address.setText(walletInfo.address);
+        tv_address.setText(address);
 
         btn_connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Web3MQSign.getInstance().sendConnectResponse(true,walletInfo,false);
+                Web3MQSign.getInstance().sendConnectResponse(id,address,true,walletInfo,false,null);
+
                 bottomSheetDialog.dismiss();
                 if(connectCallback !=null){
                     connectCallback.connectApprove();
@@ -123,7 +132,7 @@ public class WalletSignFragment extends BaseFragment {
         btn_cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Web3MQSign.getInstance().sendConnectResponse(false,null,false);
+                Web3MQSign.getInstance().sendConnectResponse(id,address,false,null,false,null);
                 bottomSheetDialog.dismiss();
                 if(connectCallback !=null){
                     connectCallback.connectReject();
@@ -143,7 +152,7 @@ public class WalletSignFragment extends BaseFragment {
 //        },3000);
     }
 
-    public void showSignBottomDialog(BridgeMessageProposer proposer, @NotNull String address, @NotNull String sign_content,String requestId, String userInfo){
+    public void showSignBottomDialog(String id, Participant participant, @NotNull String address, @NotNull String sign_content){
         if(bottomSheetDialog!=null && bottomSheetDialog.isShowing()){
             bottomSheetDialog.dismiss();
         }
@@ -155,11 +164,11 @@ public class WalletSignFragment extends BaseFragment {
         ImageView iv_website_icon = view.findViewById(R.id.iv_website_icon);
         TextView tv_address = view.findViewById(R.id.tv_address);
         TextView tv_sign_content  =view.findViewById(R.id.tv_sign_content);
-        if(proposer.url!=null){
-            tv_website_url.setText(proposer.url);
+        if(participant.website!=null){
+            tv_website_url.setText(participant.website);
         }
-        if(proposer.iconUrl!=null){
-            Glide.with(getActivity()).load(address).into(iv_website_icon);
+        if(participant.iconUrl!=null){
+            Glide.with(getActivity()).load(participant.iconUrl).into(iv_website_icon);
         }
         tv_address.setText(address);
         tv_sign_content.setText(sign_content);
@@ -170,9 +179,24 @@ public class WalletSignFragment extends BaseFragment {
                 if(onSignCallback!=null ){
                     String signature = onSignCallback.sign(sign_content);
                     Log.i(TAG,"signature:"+signature);
-                    Web3MQSign.getInstance().sendSignResponse(true,signature,requestId,userInfo,false);
+                    Web3MQSign.getInstance().sendSignResponse(id, true, signature, false, new SendBridgeMessageCallback() {
+                        @Override
+                        public void onReceived() {
+                            Toast.makeText(getActivity(),"onReceived",Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onFail() {
+                            Toast.makeText(getActivity(),"onFail",Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onTimeout() {
+                            Toast.makeText(getActivity(),"onTimeout",Toast.LENGTH_SHORT).show();
+                        }
+                    });
                     bottomSheetDialog.dismiss();
-                    onSignCallback.signApprove(proposer.redirect);
+                    onSignCallback.signApprove(participant.redirect);
                 }
             }
         });
@@ -180,9 +204,9 @@ public class WalletSignFragment extends BaseFragment {
             @Override
             public void onClick(View view) {
                 if(onSignCallback!=null ){
-                    Web3MQSign.getInstance().sendSignResponse(false,null,requestId,userInfo,false);
+                    Web3MQSign.getInstance().sendSignResponse(id,false,null,false, null);
                     bottomSheetDialog.dismiss();
-                    onSignCallback.signReject(proposer.redirect);
+                    onSignCallback.signReject(participant.redirect);
                 }
             }
         });

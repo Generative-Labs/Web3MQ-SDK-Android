@@ -1,7 +1,7 @@
 package com.ty.web3_mq.interfaces;
 
-import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
+import com.ty.web3_mq.websocket.bean.BridgeMessageMetadata;
 
 public interface WalletConnectRequestCallback {
-    void onConnectWalletSuccess(BridgeMessageWalletInfo walletInfo);
+    void onConnectWalletSuccess(BridgeMessageMetadata walletInfo);
 }

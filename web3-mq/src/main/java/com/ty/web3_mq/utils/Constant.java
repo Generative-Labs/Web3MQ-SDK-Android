@@ -9,4 +9,5 @@ public class Constant {
     public static final String SP_X25519_BRIDGE_PUB = "SP_X25519_BRIDGE_PUB";
     public static final String SP_USER_ID = "SP_USER_ID";
     public static final String SP_DID_KEY = "SP_DID_KEY";
+    public static final String SP_NODE_ID = "SP_NODE_ID";
 }

@@ -9,14 +9,14 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.Web3MQUser;
 import com.ty.web3_mq.http.beans.UserInfo;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.GetUserinfoCallback;
 import com.ty.web3_mq.interfaces.OnConnectResponseCallback;
-import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
+import com.ty.web3_mq.websocket.bean.BridgeMessageMetadata;
 import com.ty.web3mq.R;
 import com.ty.web3mq.activity.LoginActivity;
 import com.ty.web3mq.utils.AppConfig;
@@ -54,6 +54,8 @@ public class ConnectWalletFragment extends BaseFragment {
                 Web3MQSign.getInstance().init(AppConfig.DAppID, new BridgeConnectCallback() {
                     @Override
                     public void onConnectCallback() {
+
+
                         String deepLink = Web3MQSign.getInstance().generateConnectDeepLink(null,"www.web3mq.com","web3mq_dapp://");
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(deepLink));
                         startActivity(intent);
@@ -73,12 +75,12 @@ public class ConnectWalletFragment extends BaseFragment {
         });
 
         Web3MQSign.getInstance().setOnConnectResponseCallback(new OnConnectResponseCallback() {
+
             @Override
-            public void onApprove(BridgeMessageWalletInfo walletInfo) {
+            public void onApprove(BridgeMessageMetadata walletInfo, String address) {
                 String walletName = walletInfo.name;
                 String walletType = walletInfo.walletType;
-                String walletAddress = walletInfo.address;
-                Web3MQUser.getInstance().getUserInfo(walletType, walletAddress, new GetUserinfoCallback() {
+                Web3MQUser.getInstance().getUserInfo(walletType, address, new GetUserinfoCallback() {
                     @Override
                     public void onSuccess(UserInfo userInfo) {
                         // 有用户信息，跳转到登录
@@ -95,7 +97,7 @@ public class ConnectWalletFragment extends BaseFragment {
                         Log.i(TAG,"getUserInfo onUserNotRegister");
                         LoginActivity activity = (LoginActivity) getActivity();
                         RegisterFragment registerFragment = RegisterFragment.getInstance();
-                        registerFragment.setWalletInfo(walletName,walletType,walletAddress.toLowerCase());
+                        registerFragment.setWalletInfo(walletName,walletType,address.toLowerCase());
                         activity.switchContent(registerFragment);
                     }
 

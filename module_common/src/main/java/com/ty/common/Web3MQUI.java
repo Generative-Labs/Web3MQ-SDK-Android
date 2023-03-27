@@ -38,19 +38,26 @@ public class Web3MQUI {
             @Override
             public void onSuccess() {
                 Log.i(TAG,"Web3MQClient Connect Success");
-                callback.onSuccess();
+                if(callback!=null){
+                    callback.onSuccess();
+                }
+
             }
 
             @Override
             public void onFail(String error) {
-                callback.onFail();
+                if(callback!=null) {
+                    callback.onFail();
+                }
 //                initialized = false;
                 Log.i(TAG,"Web3MQClient Connect Fail error:"+error);
             }
 
             @Override
             public void alreadyConnected() {
-                callback.onSuccess();
+                if(callback!=null){
+                    callback.onSuccess();
+                }
 //                initialized = true;
                 Log.i(TAG,"Web3MQClient Already Connected");
             }

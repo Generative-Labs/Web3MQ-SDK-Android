@@ -127,7 +127,7 @@ public class InviteGroupFragment extends BottomSheetDialogFragment {
 
     private void inviteMember(String group_id, ArrayList<String> userIds){
         String[] ids = new String[]{};
-        Web3MQGroup.getInstance().invitation(group_id, userIds.toArray(ids), new InvitationGroupCallback() {
+        Web3MQGroup.getInstance().invite(group_id, userIds.toArray(ids), new InvitationGroupCallback() {
             @Override
             public void onSuccess(GroupBean invitationGroupBean) {
                 dismiss();

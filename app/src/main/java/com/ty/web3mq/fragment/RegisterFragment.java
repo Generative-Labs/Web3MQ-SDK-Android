@@ -14,7 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.Web3MQUser;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.LoginCallback;
@@ -178,11 +178,7 @@ public class RegisterFragment extends BaseFragment {
     private void sendSign(String sign_raw){
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(Web3MQSign.getInstance().generateSignDeepLink()));
         startActivity(intent);
-        BridgeMessageProposer proposer = new BridgeMessageProposer();
-        proposer.name = "Web3MQ_DAPP_DEMO";
-        proposer.url = "www.web3mq_dapp.com";
-        proposer.redirect = REDIRECT_URL;
-        Web3MQSign.getInstance().sendSignRequest(proposer,sign_raw,wallet_address,System.currentTimeMillis()+"","",false);
+        Web3MQSign.getInstance().sendSignRequest(sign_raw,wallet_address,false,null);
     }
 
     private void loginRequest(String user_id,String wallet_type,String wallet_address,String main_prv_key,String main_pubkey){

@@ -1,8 +1,9 @@
 package com.ty.web3_mq.websocket.bean;
 
-public class BridgeMessageWalletInfo {
+public class BridgeMessageMetadata {
     public String name;
     public String description;
-    public String address;
+    public String url;
     public String walletType;
+    public String redirect;
 }

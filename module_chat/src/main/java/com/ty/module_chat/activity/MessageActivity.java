@@ -22,8 +22,10 @@ import com.ty.common.utils.CommonUtils;
 import com.ty.common.view.Web3MQListView;
 import com.ty.module_chat.R;
 import com.ty.module_chat.adapter.MessagesAdapter;
+import com.ty.module_chat.bean.ChatItem;
 import com.ty.module_chat.bean.MessageItem;
 import com.ty.module_chat.fragment.InviteGroupFragment;
+import com.ty.module_chat.utils.Tools;
 import com.ty.web3_mq.Web3MQChats;
 import com.ty.web3_mq.Web3MQGroup;
 import com.ty.web3_mq.Web3MQMessageManager;
@@ -67,7 +69,6 @@ public class MessageActivity extends BaseActivity {
             @Override
             public void onSuccess(MessagesBean messagesBean) {
                 messageList.clear();
-                DefaultSPHelper.getInstance().saveMessage(chat_id,messagesBean);
                 if(messagesBean.total>0){
                     list_message.hideEmptyView();
                     for(MessageBean msg: messagesBean.result){
@@ -208,6 +209,7 @@ public class MessageActivity extends BaseActivity {
 
     private void updateMessage(MessageItem messageItem){
         messageList.add(messageItem);
+        list_message.hideEmptyView();
         if(adapter==null){
             adapter = new MessagesAdapter(messageList,MessageActivity.this);
             list_message.setAdapter(adapter);
@@ -215,16 +217,28 @@ public class MessageActivity extends BaseActivity {
             adapter.notifyItemInserted(messageList.size());
         }
         list_message.scrollTo(messageList.size()-1);
+        Tools.updateChatItem(chat_id,messageItem.content,messageItem.timestamp, 0);
     }
 
     private void updateView() {
+        if(messageList.size()>0){
+            list_message.hideEmptyView();
+        }else{
+            list_message.showEmptyView();
+            return;
+        }
+
         if(adapter==null){
             adapter = new MessagesAdapter(messageList,MessageActivity.this);
             list_message.setAdapter(adapter);
         }else{
             adapter.notifyDataSetChanged();
         }
+
+
         list_message.scrollTo(messageList.size()-1);
+
+        Tools.updateChatItem(chat_id,messageList.get(messageList.size()-1).content,messageList.get(messageList.size()-1).timestamp, 0);
     }
 
     @Override

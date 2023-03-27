@@ -10,19 +10,20 @@ import android.view.View;
 import android.widget.Button;
 
 import com.ty.web3_mq.Web3MQClient;
-import com.ty.web3_mq.Web3MQSign;
+import com.ty.web3_mq.interfaces.SendBridgeMessageCallback;
+import com.ty.web3_mq.utils.DefaultSPHelper;
+import com.ty.web3_mq.websocket.bean.sign.Web3MQSign;
 import com.ty.web3_mq.interfaces.BridgeConnectCallback;
 import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.OnConnectResponseCallback;
 import com.ty.web3_mq.interfaces.OnSignResponseMessageCallback;
 import com.ty.web3_mq.utils.RandomUtils;
-import com.ty.web3_mq.websocket.bean.BridgeMessageProposer;
-import com.ty.web3_mq.websocket.bean.BridgeMessageWalletInfo;
+import com.ty.web3_mq.websocket.bean.BridgeMessageMetadata;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private boolean connectSuccess = false;
-    private Button btn_start;
+    private Button btn_start,btn_sign;
     private static final String APIKey = "rkkJARiziBQCscgg";
     private static final String DAppID = "web3MQ_dapp_test:dapp";
     private String ETH_ADDRESS = "0x3a71d76262729144B0E833AF463Ed459179327aF";
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG,"onCreate");
         setContentView(R.layout.activity_main);
         btn_start = findViewById(R.id.btn_start);
+        btn_sign = findViewById(R.id.btn_sign);
         Web3MQClient.getInstance().init(this, APIKey);
         Web3MQClient.getInstance().startConnect(new ConnectCallback() {
             @Override
@@ -67,6 +69,15 @@ public class MainActivity extends AppCompatActivity {
                 startTest();
             }
         });
+        btn_sign.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendSign();
+            }
+        });
+        DefaultSPHelper.getInstance().clear();
+//        DefaultSPHelper.getInstance().showSessionInfo();
+
     }
 
     private void startTest(){
@@ -75,17 +86,16 @@ public class MainActivity extends AppCompatActivity {
         //listen
         web3MQSignDApp.setOnConnectResponseCallback(new OnConnectResponseCallback() {
             @Override
-            public void onApprove(BridgeMessageWalletInfo walletInfo) {
+            public void onApprove(BridgeMessageMetadata walletInfo, String address) {
                 connectReceiveCount++;
                 Log.i(TAG,"-----Receive Connect Response----count:"+connectReceiveCount);
                 Log.i(TAG,"approve : true");
-                Log.i(TAG,"walletInfo address: "+walletInfo.address);
+                Log.i(TAG,"walletInfo address: "+address);
                 Log.i(TAG,"walletInfo walletType: "+walletInfo.walletType);
                 Log.i(TAG,"walletInfo name: "+walletInfo.name);
                 Log.i(TAG,"walletInfo description: "+walletInfo.description);
                 Log.i(TAG,"-----Receive Connect End----");
-                sendSign();
-//                connect();
+                btn_sign.setEnabled(true);
             }
 
             @Override
@@ -104,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG,"approve : true");
                 Log.i(TAG,"signature:"+signature);
                 Log.i(TAG,"-----Receive Sign Request End----");
+
 //                sendSign();
 //                web3MQSignDApp.close();
             }
@@ -134,17 +145,26 @@ public class MainActivity extends AppCompatActivity {
         //sign request
         signSendCount++;
         Log.i(TAG,"----Send Sign Request----count:"+ signSendCount);
-        BridgeMessageProposer proposer = new BridgeMessageProposer();
-        proposer.name = "Web3MQ_TEST_DEMO";
-        proposer.url = "www.web3mq_dapp.com";
-        proposer.redirect = "web3mq_dapp_test://";
         String wallet_address = ETH_ADDRESS;
         String sign_raw = RandomUtils.randomNonce();
-        Log.i(TAG,"proposer name:"+proposer.name);
-        Log.i(TAG,"proposer url:"+proposer.url);
         Log.i(TAG,"wallet address:"+wallet_address);
         Log.i(TAG,"sign raw:"+sign_raw);
-        web3MQSignDApp.sendSignRequest(proposer,sign_raw,wallet_address,System.currentTimeMillis()+"","",false);
+        web3MQSignDApp.sendSignRequest(sign_raw, wallet_address, false, new SendBridgeMessageCallback() {
+            @Override
+            public void onReceived() {
+
+            }
+
+            @Override
+            public void onFail() {
+
+            }
+
+            @Override
+            public void onTimeout() {
+
+            }
+        });
         Log.i(TAG,"----Send Sign Request End----");
     }
 

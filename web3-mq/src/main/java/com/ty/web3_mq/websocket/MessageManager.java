@@ -16,6 +16,7 @@ import com.ty.web3_mq.interfaces.ConnectCallback;
 import com.ty.web3_mq.interfaces.MessageCallback;
 import com.ty.web3_mq.interfaces.NotificationMessageCallback;
 import com.ty.web3_mq.interfaces.OnConnectCommandCallback;
+import com.ty.web3_mq.interfaces.SendBridgeMessageCallback;
 import com.ty.web3_mq.websocket.bean.BridgeMessage;
 import com.ty.web3_mq.websocket.bean.MessageBean;
 
@@ -37,6 +38,8 @@ public class MessageManager {
     private ChatsMessageCallback chatsMessageCallback;
     private HashMap<String, MessageCallback> DMMessageCallbackHashMap = new HashMap<>();
     private HashMap<String, MessageCallback> groupMessageCallbackHashMap = new HashMap<>();
+    private HashMap<String, SendBridgeMessageCallback> sendBridgeMessageCallbackHashMap = new HashMap<>();
+
     private volatile static MessageManager messageManager;
     private static final String TAG = "MessageManager";
     private Handler handler = new Handler(Looper.getMainLooper());
@@ -143,7 +146,7 @@ public class MessageManager {
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    bridgeMessageCallback.onBridgeMessage(message.getComeFrom(), bridgeMessage);
+                                    bridgeMessageCallback.onBridgeMessage(message.getComeFrom(), bridgeMessage.publicKey, bridgeMessage.content);
                                 }
                             });
                         }
@@ -204,6 +207,16 @@ public class MessageManager {
                     Log.i(TAG,"Timestamp: "+response.getTimestamp());
                     Log.i(TAG,"ContentTopic: "+response.getContentTopic());
                     Log.i(TAG,"messageStatus: "+response.getMessageStatus());
+
+                    SendBridgeMessageCallback callback = sendBridgeMessageCallbackHashMap.get(response.getMessageId());
+                    if(callback!=null){
+                        if(response.getMessageStatus().equals("received")){
+                            callback.onReceived();
+                        }else{
+                            callback.onFail();
+                        }
+                        sendBridgeMessageCallbackHashMap.remove(response.getMessageId());
+                    }
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
                     Log.e(TAG,"parse error");
@@ -277,6 +290,14 @@ public class MessageManager {
     }
     public void removeGroupMessageCallback(String group_id){
         groupMessageCallbackHashMap.remove(group_id);
+    }
+
+    public void addSendBridgeMessageCallback(String messageID, SendBridgeMessageCallback callback){
+        sendBridgeMessageCallbackHashMap.put(messageID,callback);
+    }
+
+    public void removeSendBridgeMessageCallback(String messageID){
+        sendBridgeMessageCallbackHashMap.remove(messageID);
     }
 
 //    public void addTopicMessageCallback(String topic_id, MessageCallback callback){

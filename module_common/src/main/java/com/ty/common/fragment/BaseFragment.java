@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -16,7 +19,9 @@ import com.ty.common.utils.CommonUtils;
 public class BaseFragment extends Fragment {
     protected ConstraintLayout rootView;
     private int layoutId;
-    private AlertDialog alertDialog;
+    private ConstraintLayout cl_loading;
+    private ImageView iv_loading;
+    private Animation loadAnimation;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,7 +40,11 @@ public class BaseFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         rootView = (ConstraintLayout) inflater.inflate(R.layout.base_fragment,null);
         View view = LayoutInflater.from(getActivity()).inflate(layoutId,rootView,false);
+        cl_loading = rootView.findViewById(R.id.cl_loading);
+        iv_loading = rootView.findViewById(R.id.iv_loading);
         rootView.addView(view);
+        loadAnimation = AnimationUtils.loadAnimation(getActivity(),
+                R.anim.rotate);
         onBaseCreateView();
         return rootView;
     }
@@ -46,22 +55,21 @@ public class BaseFragment extends Fragment {
         super.onDestroy();
     }
 
-    protected void showLoadingDialog(){
-        if (getActivity() == null || getActivity().isDestroyed() || getActivity().isFinishing()) {
-            return;
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        View v = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_loading,null);
-        builder.setView(v);
-        builder.setCancelable(false);
-        alertDialog = builder.create();
-        alertDialog.show();
-        alertDialog.getWindow().setLayout(CommonUtils.dp2px(getActivity(),335),CommonUtils.dp2px(getActivity(),205));
+    public void showLoadingDialog(){
+        cl_loading.setVisibility(View.VISIBLE);
+        doLoadingAnimate();
     }
 
-    protected void hideLoadingDialog(){
-        if(alertDialog!=null) {
-            alertDialog.dismiss();
-        }
+    public void hideLoadingDialog(){
+        cl_loading.setVisibility(View.GONE);
+        stopLoadingAnimate();
+    }
+
+    private void doLoadingAnimate(){
+        iv_loading.startAnimation(loadAnimation);
+    }
+
+    private void stopLoadingAnimate() {
+        iv_loading.clearAnimation();
     }
 }

@@ -67,7 +67,7 @@ public class Web3MQGroup {
         }
     }
 
-    public void invitation(String groupid, String[] member_ids, InvitationGroupCallback callback){
+    public void invite(String groupid, String[] member_ids, InvitationGroupCallback callback){
         try {
             String pub_key = DefaultSPHelper.getInstance().getTempPublic();
             String prv_key_seed = DefaultSPHelper.getInstance().getTempPrivate();
